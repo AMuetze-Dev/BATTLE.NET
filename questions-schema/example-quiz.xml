@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<quiz xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="../questions-schema/questions.xsd">
+
+    <!-- Optional: Metadata -->
+    <metadata>
+        <title>Battle.Net Demo Quiz</title>
+        <author>Quiz Master</author>
+        <description>Beispiel-Quiz mit allen 8 Fragetypen</description>
+        <version>1.0</version>
+    </metadata>
+
+    <!-- Kategorie 1: Geographie -->
+    <category id="cat1" name="Geographie">
+
+        <!-- Frage 1: Input-Text -->
+        <question id="q1" type="input-text">
+            <prompt>Nenne die Hauptstadt von Deutschland.</prompt>
+            <image>media/berlin.jpg</image>
+            <inputText>
+                <answers requiredCorrect="1">
+                    <answer correct="true">Berlin</answer>
+                    <answer correct="true">berlin</answer>
+                    <answer correct="true">BERLIN</answer>
+                </answers>
+                <points>1</points>
+            </inputText>
+        </question>
+
+        <!-- Frage 2: Input-Number -->
+        <question id="q2" type="input-number">
+            <prompt>Wie viele Bundesländer hat Deutschland?</prompt>
+            <inputNumber>
+                <correctValue>16</correctValue>
+                <tolerance>0</tolerance>
+                <points>1</points>
+            </inputNumber>
+        </question>
+
+    </category>
+
+    <!-- Kategorie 2: Schätzfragen -->
+    <category id="cat2" name="Schätzfragen">
+
+        <!-- Frage 3: Slider -->
+        <question id="q3" type="slider">
+            <prompt>Schätze die Einwohnerzahl von Berlin (in Millionen).</prompt>
+            <slider autoEvaluate="false">
+                <min>0</min>
+                <max>10</max>
+                <step>0.1</step>
+                <correctValue>3.7</correctValue>
+                <unit>Millionen</unit>
+                <points>2</points>
+            </slider>
+        </question>
+
+    </category>
+
+    <!-- Kategorie 3: Multiple Choice -->
+    <category id="cat3" name="Multiple Choice">
+
+        <!-- Frage 4: Multiple-Choice -->
+        <question id="q4" type="multiple-choice">
+            <prompt>Welche Länder grenzen an Deutschland? (Mehrfachauswahl)</prompt>
+            <multipleChoice>
+                <options>
+                    <option id="opt1" correct="true">Polen</option>
+                    <option id="opt2" correct="true">Frankreich</option>
+                    <option id="opt3" correct="false">Spanien</option>
+                    <option id="opt4" correct="true">Österreich</option>
+                    <option id="opt5" correct="false">Italien</option>
+                    <option id="opt6" correct="true">Dänemark</option>
+                </options>
+            </multipleChoice>
+        </question>
+
+    </category>
+
+    <!-- Kategorie 4: Buzzer -->
+    <category id="cat4" name="Buzzer-Fragen">
+
+        <!-- Frage 5: Buzzer -->
+        <question id="q5" type="buzzer">
+            <prompt>Wie heißt der längste Fluss Europas?</prompt>
+            <buzzer>
+                <winnerPoints>3</winnerPoints>
+                <otherPoints>1</otherPoints>
+            </buzzer>
+        </question>
+
+    </category>
+
+    <!-- Kategorie 5: Bildfragen -->
+    <category id="cat5" name="Bildfragen">
+
+        <!-- Frage 6: Image Question -->
+        <question id="q6" type="image-question">
+            <prompt>Was ist auf diesem Bild zu sehen?</prompt>
+            <imageQuestion>
+                <imageUrl>media/landmark.jpg</imageUrl>
+                <allowZoom>true</allowZoom>
+            </imageQuestion>
+        </question>
+
+        <!-- Frage 7: Hotspot -->
+        <question id="q7" type="hotspot">
+            <prompt>Klicke auf Deutschland auf der Europakarte.</prompt>
+            <hotspot>
+                <imageUrl>media/europe-map.png</imageUrl>
+                <hotspots>
+                    <hotspot id="hs1" x="520" y="340" radius="80" label="Deutschland" />
+                    <hotspot id="hs2" x="480" y="420" radius="60" label="Schweiz" />
+                </hotspots>
+                <points>1</points>
+            </hotspot>
+        </question>
+
+    </category>
+
+    <!-- Kategorie 6: Sortieraufgaben -->
+    <category id="cat6" name="Sortieren">
+
+        <!-- Frage 8: Sorting -->
+        <question id="q8" type="sorting">
+            <prompt>Sortiere die folgenden Länder nach Einwohnerzahl (größte zuerst).</prompt>
+            <sorting>
+                <items>
+                    <item id="item1" correctOrder="1">China</item>
+                    <item id="item2" correctOrder="2">Indien</item>
+                    <item id="item3" correctOrder="3">USA</item>
+                    <item id="item4" correctOrder="4">Deutschland</item>
+                </items>
+            </sorting>
+        </question>
+
+    </category>
+
+    <!-- Kategorie 7: Erweiterte Beispiele -->
+    <category id="cat7" name="Erweiterte Beispiele">
+
+        <!-- Input-Text mit mehreren richtigen Antworten -->
+        <question id="q9" type="input-text">
+            <prompt>Nenne 2 Ozeane.</prompt>
+            <inputText>
+                <answers requiredCorrect="2">
+                    <answer correct="true">Atlantik</answer>
+                    <answer correct="true">Pazifik</answer>
+                    <answer correct="true">Indischer Ozean</answer>
+                    <answer correct="true">Arktischer Ozean</answer>
+                    <answer correct="true">Südlicher Ozean</answer>
+                </answers>
+                <points>2</points>
+            </inputText>
+        </question>
+
+        <!-- Input-Number mit Toleranz -->
+        <question id="q10" type="input-number">
+            <prompt>Wie viele Meter hat der Mount Everest? (±50m Toleranz)</prompt>
+            <inputNumber>
+                <correctValue>8849</correctValue>
+                <tolerance>50</tolerance>
+                <points>1</points>
+            </inputNumber>
+        </question>
+
+    </category>
+
+</quiz>

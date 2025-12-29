@@ -1,0 +1,70 @@
+﻿services:
+  db:
+    container_name: postgres_db
+    restart: always
+    networks:
+      - battlenet_network
+    ports:
+      - "5432:5432"
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: battlenet
+  
+  backend:
+    container_name: battlenet_backend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.windows
+    restart: always
+    networks:
+      - battlenet_network
+    environment:
+      - DATABASE_URL=postgresql://root:root@db:5432/battlenet_db
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+
+  frontend:
+    container_name: battlenet_frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.windows
+    restart: always
+    networks:
+      - battlenet_network
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
+  pgadmin:
+    container_name: pgadmin
+    restart: always
+    networks:
+      - battlenet_network
+    ports:
+      - "5050:80"
+    image: dpage/pgadmin4:latest
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: root
+
+  proxy:
+    container_name: battlenet_proxy
+    image: nginx:alpine
+    restart: always
+    networks:
+      - battlenet_network
+    ports:
+      - "80:80"
+    volumes:
+      - "./nginx.conf:/etc/nginx/conf.d/default.conf:ro"
+    depends_on:
+      - frontend
+      - backend
+
+networks:
+  battlenet_network: {}

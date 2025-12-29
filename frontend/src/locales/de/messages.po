@@ -1,0 +1,900 @@
+msgid ""
+msgstr ""
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Language: de\n"
+"Project-Id-Version: \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: \n"
+"PO-Revision-Date: \n"
+"Last-Translator: \n"
+"Language-Team: \n"
+
+#. js-lingui-explicit-id
+#. placeholder {0}: gameState.buzzer_winner.player_name
+#: src/presentation/pages/ModeratorSessionPage.tsx:837
+msgid "moderator.buzzerWinner"
+msgstr "{0} hat gebuzzert!"
+
+#: src/presentation/pages/ModeratorSessionPage.tsx:801
+#~ msgid "{0} hat gebuzzert!"
+#~ msgstr "{0} hat gebuzzert!"
+
+#. js-lingui-explicit-id
+#: src/presentation/pages/QuizSelectionPage.tsx:111
+msgid "quizSelection.backToSession"
+msgstr "← Zurück zur Session"
+
+#: src/presentation/pages/QuizSelectionPage.tsx:111
+#~ msgid "← Zurück zur Session"
+#~ msgstr "← Zurück zur Session"
+
+#. js-lingui-explicit-id
+#: src/presentation/molecules/AnswerInput.tsx:156
+msgid "player.youBuzzed"
+msgstr "✓ Du hast gebuzzert!"
+
+#: src/presentation/molecules/AnswerInput.tsx:114
+#~ msgid "✓ Du hast gebuzzert!"
+#~ msgstr "✓ Du hast gebuzzert!"
+
+#. js-lingui-explicit-id
+#: src/presentation/molecules/AnswerInput.tsx:209
+msgid "player.sentWithdraw"
+msgstr "✓ Gesendet • Zurückziehen"
+
+#: src/presentation/molecules/AnswerInput.tsx:167
+#~ msgid "✓ Gesendet • Zurückziehen"
+#~ msgstr "✓ Gesendet • Zurückziehen"
+
+#. js-lingui-explicit-id
+#: src/presentation/pages/QuizEditorPage.tsx:719
+msgid "quizEditor.markedCorrect"
+msgstr "✓ Korrekt"
+
+#: src/presentation/pages/QuizEditorPage.tsx:721
+#~ msgid "✓ Korrekt"
+#~ msgstr "✓ Korrekt"
+
+#. js-lingui-explicit-id
+#: src/presentation/pages/PlayerSessionPage.tsx:388
+msgid "player.gameFinished"
+msgstr "🏆 Spiel beendet!"
+
+#: src/presentation/pages/PlayerSessionPage.tsx:388
+#~ msgid "🏆 Spiel beendet!"
+#~ msgstr "🏆 Spiel beendet!"
+
+#. js-lingui-explicit-id
+#: src/presentation/pages/ModeratorSessionPage.tsx:757
+msgid "moderator.controls.questionVisible"
+msgstr "👁️ Frage sichtbar"
+
+#: src/presentation/pages/ModeratorSessionPage.tsx:721
+#~ msgid "👁️ Frage sichtbar"
+#~ msgstr "👁️ Frage sichtbar"
+
+#. js-lingui-explicit-id
+#: src/presentation/pages/ModeratorSessionPage.tsx:757
+msgid "moderator.controls.questionHidden"
+msgstr "👁️ Frage verborgen"
+
+#: src/presentation/pages/ModeratorSessionPage.tsx:721
+#~ msgid "👁️ Frage verborgen"
+#~ msgstr "👁️ Frage verborgen"
+
+#. js-lingui-explicit-id
+#: src/presentation/pages/ModeratorSessionPage.tsx:760
+msgid "moderator.controls.inputLocked"
+msgstr "🔒 Eingabe gesperrt"
+
+#: src/presentation/pages/ModeratorSessionPage.tsx:724
+#~ msgid "🔒 Eingabe gesperrt"
+#~ msgstr "🔒 Eingabe gesperrt"
+
+#. js-lingui-explicit-id
+#: src/presentation/pages/ModeratorSessionPage.tsx:760
+msgid "moderator.controls.inputOpen"
+msgstr "🔓 Eingabe frei"
+
+#: src/presentation/pages/ModeratorSessionPage.tsx:724
+#~ msgid "🔓 Eingabe frei"
+#~ msgstr "🔓 Eingabe frei"
+
+#. js-lingui-explicit-id
+#. placeholder {0}: buzzerWinner.player_name
+#: src/presentation/molecules/AnswerInput.tsx:156
+msgid "player.otherBuzzed"
+msgstr "🔔 {0} hat gebuzzert!"
+
+#: src/presentation/molecules/AnswerInput.tsx:114
+#~ msgid "🔔 {0} hat gebuzzert!"
+#~ msgstr "🔔 {0} hat gebuzzert!"
+
+#. js-lingui-explicit-id
+#: src/presentation/pages/QuizEditorPage.tsx:783
+msgid "common.cancel"
+msgstr "Abbrechen"
+
+#: src/presentation/pages/QuizEditorPage.tsx:785
+#~ msgid "Abbrechen"
+#~ msgstr "Abbrechen"
+
+#. js-lingui-explicit-id
+#: src/presentation/molecules/AnswerInput.tsx:209
+msgid "player.submit"
+msgstr "Absenden"
+
+#: src/presentation/molecules/AnswerInput.tsx:167
+#~ msgid "Absenden"
+#~ msgstr "Absenden"
+
+#. js-lingui-explicit-id
+#: src/presentation/pages/QuizEditorPage.tsx:534
+msgid "common.update"
+msgstr "Aktualisieren"
+
+#: src/presentation/pages/QuizEditorPage.tsx:536
+#~ msgid "Aktualisieren"
+#~ msgstr "Aktualisieren"
+
+#. js-lingui-explicit-id
+#. placeholder {0}: index + 1
+#: src/presentation/pages/QuizEditorPage.tsx:719
+msgid "quizEditor.answerNumber"
+msgstr "Antwort {0}"
+
+#: src/presentation/pages/QuizEditorPage.tsx:721
+#~ msgid "Antwort {0}"
+#~ msgstr "Antwort {0}"
+
+#. js-lingui-explicit-id
+#: src/presentation/pages/QuizEditorPage.tsx:714
+msgid "quizEditor.answersLabel"
+msgstr "Antworten (Wähle die korrekte Antwort)"
+
+#: src/presentation/pages/QuizEditorPage.tsx:716
+#~ msgid "Antworten (Wähle die korrekte Antwort)"
+#~ msgstr "Antworten (Wähle die korrekte Antwort)"
+
+#. js-lingui-explicit-id
+#: src/presentation/pages/HomePage.tsx:287
+msgid "home.title"
+msgstr "Battle.Net Quiz Platform"
+
+#: src/presentation/pages/HomePage.tsx:287
+#~ msgid "Battle.Net Quiz Platform"
+#~ msgstr "Battle.Net Quiz Platform"
+
+#. js-lingui-explicit-id
+#: src/presentation/pages/PlayerSessionPage.tsx:394
+msgid "player.answerPrompt"
+msgstr "Beantworte die Frage!"
+
+#: src/presentation/pages/PlayerSessionPage.tsx:394
+#~ msgid "Beantworte die Frage!"
+#~ msgstr "Beantworte die Frage!"
+
+#. js-lingui-explicit-id
+#: src/presentation/pages/HomePage.tsx:336
+msgid "home.join"
+msgstr "Beitreten"
+
+#: src/presentation/pages/HomePage.tsx:336
+#~ msgid "Beitreten"
+#~ msgstr "Beitreten"
+
+#. js-lingui-explicit-id
+#: src/presentation/pages/QuizEditorPage.tsx:644
+msgid "quizEditor.imageOptional"
+msgstr "Bild (optional)"
+
+#: src/presentation/pages/QuizEditorPage.tsx:646
+#~ msgid "Bild (optional)"
+#~ msgstr "Bild (optional)"
+
+#. js-lingui-explicit-id
+#: src/presentation/pages/QuizEditorPage.tsx:681
+msgid "quizEditor.dragImageHere"
+msgstr "Bild hierher ziehen oder"
+
+#: src/presentation/pages/QuizEditorPage.tsx:683
+#~ msgid "Bild hierher ziehen oder"
+#~ msgstr "Bild hierher ziehen oder"
+
+#. js-lingui-explicit-id
+#: src/presentation/atoms/BuzzerButton.tsx:63
+msgid "input.buzzer"
+msgstr "BUZZER"
+
+#: src/presentation/atoms/BuzzerButton.tsx:63
+#~ msgid "BUZZER"
+#~ msgstr "BUZZER"
+
+#. js-lingui-explicit-id
+#: src/presentation/pages/QuizEditorPage.tsx:699
+msgid "quizEditor.selectFile"
+msgstr "Datei auswählen"
+
+#: src/presentation/pages/QuizEditorPage.tsx:701
+#~ msgid "Datei auswählen"
+#~ msgstr "Datei auswählen"
+
+#. js-lingui-explicit-id
+#: src/presentation/pages/PlayerSessionPage.tsx:412
+msgid "player.yourScore"
+msgstr "Deine Punkte"
+
+#: src/presentation/pages/PlayerSessionPage.tsx:412
+#~ msgid "Deine Punkte"
+#~ msgstr "Deine Punkte"
+
+#. js-lingui-explicit-id
+#: src/presentation/molecules/AnswerInput.tsx:168
+msgid "player.buzzerHint"
+msgstr "Drücke Leertaste oder klicke"
+
+#: src/presentation/molecules/AnswerInput.tsx:126
+#~ msgid "Drücke Leertaste oder klicke"
+#~ msgstr "Drücke Leertaste oder klicke"
+
+#. js-lingui-explicit-id
+#: src/presentation/pages/QuizEditorPage.tsx:752
+msgid "quizEditor.inputType"
+msgstr "Eingabetyp"
+
+#: src/presentation/pages/QuizEditorPage.tsx:754
+#~ msgid "Eingabetyp"
+#~ msgstr "Eingabetyp"
+
+#. js-lingui-explicit-id
+#: src/presentation/pages/QuizEditorPage.tsx:656
+msgid "common.remove"
+msgstr "Entfernen"
+
+#: src/presentation/pages/QuizEditorPage.tsx:658
+#~ msgid "Entfernen"
+#~ msgstr "Entfernen"
+
+#. js-lingui-explicit-id
+#: src/presentation/pages/QuizEditorPage.tsx:573
+msgid "quizEditor.createFirstQuestion"
+msgstr "Erste Frage erstellen"
+
+#: src/presentation/pages/QuizEditorPage.tsx:575
+#~ msgid "Erste Frage erstellen"
+#~ msgstr "Erste Frage erstellen"
+
+#. js-lingui-explicit-id
+#: src/presentation/pages/QuizEditorPage.tsx:570
+msgid "quizEditor.createFirstQuestionHint"
+msgstr "Erstelle deine erste Frage, um mit dem Quiz zu beginnen"
+
+#: src/presentation/pages/QuizEditorPage.tsx:572
+#~ msgid "Erstelle deine erste Frage, um mit dem Quiz zu beginnen"
+#~ msgstr "Erstelle deine erste Frage, um mit dem Quiz zu beginnen"
+
+#. js-lingui-explicit-id
+#: src/presentation/pages/HomePage.tsx:303
+msgid "home.createQuizDesc"
+msgstr "Erstelle deinen eigenen Fragenkatalog mit dem intuitiven Editor"
+
+#: src/presentation/pages/HomePage.tsx:303
+#~ msgid "Erstelle deinen eigenen Fragenkatalog mit dem intuitiven Editor"
+#~ msgstr "Erstelle deinen eigenen Fragenkatalog mit dem intuitiven Editor"
+
+#. js-lingui-explicit-id
+#: src/presentation/pages/QuizSelectionPage.tsx:130
+msgid "quizSelection.createQuizzesHint"
+msgstr "Erstelle Quizze im Quiz-Editor und wähle sie hier aus"
+
+#: src/presentation/pages/QuizSelectionPage.tsx:130
+#~ msgid "Erstelle Quizze im Quiz-Editor und wähle sie hier aus"
+#~ msgstr "Erstelle Quizze im Quiz-Editor und wähle sie hier aus"
+
+#. js-lingui-explicit-id
+#: src/presentation/pages/QuizSelectionPage.tsx:159
+msgid "quizSelection.createdLabel"
+msgstr "Erstellt:"
+
+#: src/presentation/pages/QuizSelectionPage.tsx:159
+#~ msgid "Erstellt:"
+#~ msgstr "Erstellt:"
+
+#. js-lingui-explicit-id
+#: src/presentation/pages/QuizEditorPage.tsx:537
+msgid "common.export"
+msgstr "Exportieren"
+
+#: src/presentation/pages/QuizEditorPage.tsx:539
+#~ msgid "Exportieren"
+#~ msgstr "Exportieren"
+
+#. js-lingui-explicit-id
+#: src/presentation/atoms/TrueFalseInput.tsx:61
+msgid "input.falseOption"
+msgstr "Falsch"
+
+#. js-lingui-explicit-id
+#: src/presentation/pages/ModeratorSessionPage.tsx:843
+msgid "moderator.answerWrong"
+msgstr "Falsch"
+
+#: src/presentation/atoms/TrueFalseInput.tsx:61
+#: src/presentation/pages/ModeratorSessionPage.tsx:807
+#~ msgid "Falsch"
+#~ msgstr "Falsch"
+
+#. js-lingui-explicit-id
+#: src/presentation/pages/QuizEditorPage.tsx:741
+msgid "quizEditor.falseOption"
+msgstr "Falsch (False)"
+
+#: src/presentation/pages/QuizEditorPage.tsx:743
+#~ msgid "Falsch (False)"
+#~ msgstr "Falsch (False)"
+
+#. js-lingui-explicit-id
+#: src/presentation/pages/ModeratorSessionPage.tsx:699
+#: src/presentation/pages/PlayerSessionPage.tsx:352
+msgid "common.error"
+msgstr "Fehler"
+
+#: src/presentation/pages/ModeratorSessionPage.tsx:663
+#: src/presentation/pages/PlayerSessionPage.tsx:352
+#~ msgid "Fehler"
+#~ msgstr "Fehler"
+
+#. js-lingui-explicit-id
+#. placeholder {0}: currentQuestionIndex + 1
+#. placeholder {1}: questions.length
+#: src/presentation/pages/ModeratorSessionPage.tsx:744
+msgid "moderator.navigation.questionOfTotal"
+msgstr "Frage {0}/{1}"
+
+#: src/presentation/pages/ModeratorSessionPage.tsx:708
+#~ msgid "Frage {0}/{1}"
+#~ msgstr "Frage {0}/{1}"
+
+#. js-lingui-explicit-id
+#: src/presentation/pages/ModeratorSessionPage.tsx:849
+msgid "moderator.questionNotVisibleYet"
+msgstr "Frage für Spieler noch nicht sichtbar"
+
+#: src/presentation/pages/ModeratorSessionPage.tsx:813
+#~ msgid "Frage für Spieler noch nicht sichtbar"
+#~ msgstr "Frage für Spieler noch nicht sichtbar"
+
+#. js-lingui-explicit-id
+#: src/presentation/pages/QuizEditorPage.tsx:559
+msgid "quizEditor.addQuestion"
+msgstr "Frage hinzufügen"
+
+#: src/presentation/pages/QuizEditorPage.tsx:561
+#~ msgid "Frage hinzufügen"
+#~ msgstr "Frage hinzufügen"
+
+#. js-lingui-explicit-id
+#: src/presentation/pages/ModeratorSessionPage.tsx:739
+msgid "moderator.navigation.title"
+msgstr "Frage Navigation"
+
+#: src/presentation/pages/ModeratorSessionPage.tsx:703
+#~ msgid "Frage Navigation"
+#~ msgstr "Frage Navigation"
+
+#. js-lingui-explicit-id
+#: src/presentation/pages/ModeratorSessionPage.tsx:724
+#: src/presentation/pages/QuizEditorPage.tsx:556
+msgid "common.questions"
+msgstr "Fragen"
+
+#. js-lingui-explicit-id
+#: src/presentation/pages/QuizEditorPage.tsx:809
+msgid "common.questionsCount"
+msgstr "Fragen"
+
+#: src/presentation/pages/ModeratorSessionPage.tsx:688
+#: src/presentation/pages/QuizEditorPage.tsx:558
+#: src/presentation/pages/QuizEditorPage.tsx:811
+#~ msgid "Fragen"
+#~ msgstr "Fragen"
+
+#. js-lingui-explicit-id
+#: src/presentation/pages/QuizSelectionPage.tsx:153
+msgid "quizSelection.questionsLabel"
+msgstr "Fragen:"
+
+#: src/presentation/pages/QuizSelectionPage.tsx:153
+#~ msgid "Fragen:"
+#~ msgstr "Fragen:"
+
+#. js-lingui-explicit-id
+#: src/presentation/pages/QuizEditorPage.tsx:626
+msgid "quizEditor.questionType"
+msgstr "Fragetyp"
+
+#: src/presentation/pages/QuizEditorPage.tsx:628
+#~ msgid "Fragetyp"
+#~ msgstr "Fragetyp"
+
+#. js-lingui-explicit-id
+#: src/presentation/pages/HomePage.tsx:333
+msgid "home.joinSessionDesc"
+msgstr "Gib einen Session-Code ein um mitzuspielen"
+
+#: src/presentation/pages/HomePage.tsx:333
+#~ msgid "Gib einen Session-Code ein um mitzuspielen"
+#~ msgstr "Gib einen Session-Code ein um mitzuspielen"
+
+#. js-lingui-explicit-id
+#: src/presentation/pages/QuizEditorPage.tsx:541
+msgid "common.import"
+msgstr "Importieren"
+
+#: src/presentation/pages/QuizEditorPage.tsx:543
+#~ msgid "Importieren"
+#~ msgstr "Importieren"
+
+#. js-lingui-explicit-id
+#: src/presentation/pages/HomePage.tsx:290
+msgid "home.subtitle"
+msgstr "Interaktive Quiz-Plattform für Echtzeit-Multiplayer-Lernerfahrungen"
+
+#: src/presentation/pages/HomePage.tsx:290
+#~ msgid "Interaktive Quiz-Plattform für Echtzeit-Multiplayer-Lernerfahrungen"
+#~ msgstr "Interaktive Quiz-Plattform für Echtzeit-Multiplayer-Lernerfahrungen"
+
+#. js-lingui-explicit-id
+#: src/presentation/pages/ModeratorSessionPage.tsx:784
+msgid "moderator.noQuizLoaded"
+msgstr "Kein Quiz geladen"
+
+#: src/presentation/pages/ModeratorSessionPage.tsx:748
+#~ msgid "Kein Quiz geladen"
+#~ msgstr "Kein Quiz geladen"
+
+#. js-lingui-explicit-id
+#: src/presentation/pages/ModeratorSessionPage.tsx:744
+msgid "moderator.navigation.noQuestion"
+msgstr "Keine Frage"
+
+#: src/presentation/pages/ModeratorSessionPage.tsx:708
+#~ msgid "Keine Frage"
+#~ msgstr "Keine Frage"
+
+#. js-lingui-explicit-id
+#: src/presentation/pages/QuizEditorPage.tsx:801
+msgid "quizEditor.noSavedQuizzes"
+msgstr "Keine gespeicherten Quizze gefunden."
+
+#: src/presentation/pages/QuizEditorPage.tsx:803
+#~ msgid "Keine gespeicherten Quizze gefunden."
+#~ msgstr "Keine gespeicherten Quizze gefunden."
+
+#. js-lingui-explicit-id
+#: src/presentation/pages/QuizSelectionPage.tsx:129
+msgid "quizSelection.noQuizzesFound"
+msgstr "Keine Quizze gefunden"
+
+#: src/presentation/pages/QuizSelectionPage.tsx:129
+#~ msgid "Keine Quizze gefunden"
+#~ msgstr "Keine Quizze gefunden"
+
+#. js-lingui-explicit-id
+#: src/presentation/pages/ModeratorSessionPage.tsx:898
+msgid "moderator.noPlayersYet"
+msgstr "Keine Spieler bisher."
+
+#: src/presentation/pages/ModeratorSessionPage.tsx:839
+#~ msgid "Keine Spieler bisher."
+#~ msgstr "Keine Spieler bisher."
+
+#. js-lingui-explicit-id
+#: src/presentation/pages/QuizEditorPage.tsx:729
+msgid "quizEditor.correctAnswer"
+msgstr "Korrekte Antwort"
+
+#: src/presentation/pages/QuizEditorPage.tsx:731
+#~ msgid "Korrekte Antwort"
+#~ msgstr "Korrekte Antwort"
+
+#. js-lingui-explicit-id
+#: src/presentation/pages/ModeratorSessionPage.tsx:831
+msgid "moderator.correctAnswer"
+msgstr "Korrekte Antwort:"
+
+#: src/presentation/pages/ModeratorSessionPage.tsx:795
+#~ msgid "Korrekte Antwort:"
+#~ msgstr "Korrekte Antwort:"
+
+#. js-lingui-explicit-id
+#: src/presentation/pages/QuizSelectionPage.tsx:124
+msgid "quizSelection.loading"
+msgstr "Lade Quizze..."
+
+#. js-lingui-explicit-id
+#: src/presentation/pages/QuizEditorPage.tsx:797
+msgid "quizEditor.loadingQuizzes"
+msgstr "Lade Quizze..."
+
+#: src/presentation/pages/QuizEditorPage.tsx:799
+#: src/presentation/pages/QuizSelectionPage.tsx:124
+#~ msgid "Lade Quizze..."
+#~ msgstr "Lade Quizze..."
+
+#. js-lingui-explicit-id
+#: src/presentation/pages/QuizEditorPage.tsx:531
+msgid "common.load"
+msgstr "Laden"
+
+#: src/presentation/pages/QuizEditorPage.tsx:533
+#~ msgid "Laden"
+#~ msgstr "Laden"
+
+#. js-lingui-explicit-id
+#: src/presentation/pages/ModeratorSessionPage.tsx:690
+#: src/presentation/pages/PlayerSessionPage.tsx:343
+msgid "common.loading"
+msgstr "Laden..."
+
+#: src/presentation/pages/ModeratorSessionPage.tsx:654
+#: src/presentation/pages/PlayerSessionPage.tsx:343
+#~ msgid "Laden..."
+#~ msgstr "Laden..."
+
+#: src/presentation/pages/ModeratorSessionPage.tsx:787
+msgid "Nächste Frage:"
+msgstr "Nächste Frage:"
+
+#. js-lingui-explicit-id
+#: src/presentation/pages/ModeratorSessionPage.tsx:877
+msgid "moderator.nextQuestion"
+msgstr "Nächste Frage:"
+
+#. js-lingui-explicit-id
+#: src/presentation/pages/QuizEditorPage.tsx:528
+msgid "quizEditor.newQuiz"
+msgstr "Neues Quiz"
+
+#: src/presentation/pages/QuizEditorPage.tsx:530
+#~ msgid "Neues Quiz"
+#~ msgstr "Neues Quiz"
+
+#. js-lingui-explicit-id
+#: src/presentation/pages/QuizEditorPage.tsx:567
+msgid "quizEditor.noQuestionsYet"
+msgstr "Noch keine Fragen"
+
+#: src/presentation/pages/QuizEditorPage.tsx:569
+#~ msgid "Noch keine Fragen"
+#~ msgstr "Noch keine Fragen"
+
+#. js-lingui-explicit-id
+#: src/presentation/pages/QuizSelectionPage.tsx:129
+msgid "quizSelection.noQuizzesYet"
+msgstr "Noch keine Quizze vorhanden"
+
+#: src/presentation/pages/QuizSelectionPage.tsx:129
+#~ msgid "Noch keine Quizze vorhanden"
+#~ msgstr "Noch keine Quizze vorhanden"
+
+#. js-lingui-explicit-id
+#: src/presentation/pages/QuizEditorPage.tsx:757
+msgid "quizEditor.numbersOnly"
+msgstr "Nur Zahlen"
+
+#: src/presentation/pages/QuizEditorPage.tsx:759
+#~ msgid "Nur Zahlen"
+#~ msgstr "Nur Zahlen"
+
+#. js-lingui-explicit-id
+#: src/presentation/pages/QuizEditorPage.tsx:703
+msgid "common.or"
+msgstr "oder"
+
+#: src/presentation/pages/QuizEditorPage.tsx:705
+#~ msgid "oder"
+#~ msgstr "oder"
+
+#. js-lingui-explicit-id
+#: src/presentation/pages/ModeratorSessionPage.tsx:911
+msgid "common.offline"
+msgstr "Offline"
+
+#: src/presentation/pages/ModeratorSessionPage.tsx:852
+#~ msgid "Offline"
+#~ msgstr "Offline"
+
+#. js-lingui-explicit-id
+#: src/presentation/pages/QuizEditorPage.tsx:594
+msgid "quizEditor.untitled"
+msgstr "Ohne Titel"
+
+#: src/presentation/pages/QuizEditorPage.tsx:596
+#~ msgid "Ohne Titel"
+#~ msgstr "Ohne Titel"
+
+#. js-lingui-explicit-id
+#: src/presentation/pages/ModeratorSessionPage.tsx:892
+msgid "common.online"
+msgstr "online"
+
+#: src/presentation/pages/ModeratorSessionPage.tsx:833
+#~ msgid "online"
+#~ msgstr "online"
+
+#. js-lingui-explicit-id
+#: src/presentation/pages/ModeratorSessionPage.tsx:911
+msgid "common.onlineStatus"
+msgstr "Online"
+
+#: src/presentation/pages/ModeratorSessionPage.tsx:852
+#~ msgid "Online"
+#~ msgstr "Online"
+
+#. js-lingui-explicit-id
+#: src/presentation/pages/QuizSelectionPage.tsx:103
+msgid "quizSelection.title"
+msgstr "Quiz auswählen"
+
+#: src/presentation/pages/QuizSelectionPage.tsx:103
+#~ msgid "Quiz auswählen"
+#~ msgstr "Quiz auswählen"
+
+#. js-lingui-explicit-id
+#: src/presentation/pages/HomePage.tsx:300
+msgid "home.createQuiz"
+msgstr "Quiz erstellen"
+
+#: src/presentation/pages/HomePage.tsx:300
+#~ msgid "Quiz erstellen"
+#~ msgstr "Quiz erstellen"
+
+#. js-lingui-explicit-id
+#: src/presentation/pages/QuizSelectionPage.tsx:166
+msgid "quizSelection.useQuiz"
+msgstr "Quiz verwenden"
+
+#: src/presentation/pages/QuizSelectionPage.tsx:166
+#~ msgid "Quiz verwenden"
+#~ msgstr "Quiz verwenden"
+
+#. js-lingui-explicit-id
+#: src/presentation/pages/HomePage.tsx:278
+#: src/presentation/pages/QuizEditorPage.tsx:523
+msgid "quizEditor.title"
+msgstr "Quiz-Editor"
+
+#: src/presentation/pages/HomePage.tsx:278
+#: src/presentation/pages/QuizEditorPage.tsx:525
+#~ msgid "Quiz-Editor"
+#~ msgstr "Quiz-Editor"
+
+#. js-lingui-explicit-id
+#: src/presentation/pages/ModeratorSessionPage.tsx:840
+msgid "moderator.answerCorrect"
+msgstr "Richtig"
+
+#: src/presentation/pages/ModeratorSessionPage.tsx:804
+#~ msgid "Richtig"
+#~ msgstr "Richtig"
+
+#. js-lingui-explicit-id
+#: src/presentation/pages/QuizEditorPage.tsx:817
+msgid "common.close"
+msgstr "Schließen"
+
+#: src/presentation/pages/QuizEditorPage.tsx:819
+#~ msgid "Schließen"
+#~ msgstr "Schließen"
+
+#. js-lingui-explicit-id
+#: src/presentation/pages/HomePage.tsx:330
+msgid "home.joinSession"
+msgstr "Session beitreten"
+
+#: src/presentation/pages/HomePage.tsx:330
+#~ msgid "Session beitreten"
+#~ msgstr "Session beitreten"
+
+#. js-lingui-explicit-id
+#: src/presentation/pages/HomePage.tsx:321
+msgid "home.createSession"
+msgstr "Session erstellen"
+
+#: src/presentation/pages/HomePage.tsx:321
+#~ msgid "Session erstellen"
+#~ msgstr "Session erstellen"
+
+#. js-lingui-explicit-id
+#: src/presentation/pages/ModeratorSessionPage.tsx:700
+msgid "moderator.error.sessionNotFound"
+msgstr "Session nicht gefunden"
+
+#: src/presentation/pages/ModeratorSessionPage.tsx:664
+#~ msgid "Session nicht gefunden"
+#~ msgstr "Session nicht gefunden"
+
+#. js-lingui-explicit-id
+#: src/presentation/pages/HomePage.tsx:315
+msgid "home.startSession"
+msgstr "Session starten"
+
+#: src/presentation/pages/HomePage.tsx:315
+#~ msgid "Session starten"
+#~ msgstr "Session starten"
+
+#. js-lingui-explicit-id
+#: src/presentation/pages/QuizSelectionPage.tsx:106
+msgid "quizSelection.session"
+msgstr "Session:"
+
+#: src/presentation/pages/QuizSelectionPage.tsx:106
+#~ msgid "Session:"
+#~ msgstr "Session:"
+
+#. js-lingui-explicit-id
+#: src/presentation/pages/ModeratorSessionPage.tsx:774
+msgid "moderator.timer.set"
+msgstr "Setzen"
+
+#: src/presentation/pages/ModeratorSessionPage.tsx:738
+#~ msgid "Setzen"
+#~ msgstr "Setzen"
+
+#. js-lingui-explicit-id
+#: src/presentation/pages/QuizEditorPage.tsx:534
+#: src/presentation/pages/QuizEditorPage.tsx:786
+msgid "common.save"
+msgstr "Speichern"
+
+#: src/presentation/pages/QuizEditorPage.tsx:536
+#: src/presentation/pages/QuizEditorPage.tsx:788
+#~ msgid "Speichern"
+#~ msgstr "Speichern"
+
+#. js-lingui-explicit-id
+#: src/presentation/pages/QuizEditorPage.tsx:534
+msgid "common.saving"
+msgstr "Speichern..."
+
+#: src/presentation/pages/QuizEditorPage.tsx:536
+#~ msgid "Speichern..."
+#~ msgstr "Speichern..."
+
+#. js-lingui-explicit-id
+#: src/presentation/pages/ModeratorSessionPage.tsx:720
+#: src/presentation/pages/ModeratorSessionPage.tsx:890
+msgid "common.players"
+msgstr "Spieler"
+
+#: src/presentation/pages/ModeratorSessionPage.tsx:684
+#: src/presentation/pages/ModeratorSessionPage.tsx:831
+#~ msgid "Spieler"
+#~ msgstr "Spieler"
+
+#. js-lingui-explicit-id
+#: src/presentation/pages/PlayerSessionPage.tsx:354
+msgid "player.error.notFound"
+msgstr "Spieler nicht gefunden"
+
+#: src/presentation/pages/PlayerSessionPage.tsx:354
+#~ msgid "Spieler nicht gefunden"
+#~ msgstr "Spieler nicht gefunden"
+
+#. js-lingui-explicit-id
+#: src/presentation/pages/ModeratorSessionPage.tsx:855
+msgid "moderator.playerAnswers"
+msgstr "Spieler-Antworten"
+
+#. js-lingui-explicit-id
+#: src/presentation/pages/HomePage.tsx:318
+msgid "home.startSessionDesc"
+msgstr "Starte eine neue Quiz-Session und lade Spieler ein"
+
+#: src/presentation/pages/HomePage.tsx:318
+#~ msgid "Starte eine neue Quiz-Session und lade Spieler ein"
+#~ msgstr "Starte eine neue Quiz-Session und lade Spieler ein"
+
+#. js-lingui-explicit-id
+#: src/presentation/pages/ModeratorSessionPage.tsx:754
+msgid "moderator.controls.title"
+msgstr "Steuerung"
+
+#: src/presentation/pages/ModeratorSessionPage.tsx:718
+#~ msgid "Steuerung"
+#~ msgstr "Steuerung"
+
+#. js-lingui-explicit-id
+#: src/presentation/pages/ModeratorSessionPage.tsx:899
+msgid "moderator.shareSessionCode"
+msgstr "Teile den Session-Code!"
+
+#: src/presentation/pages/ModeratorSessionPage.tsx:840
+#~ msgid "Teile den Session-Code!"
+#~ msgstr "Teile den Session-Code!"
+
+#. js-lingui-explicit-id
+#: src/presentation/pages/PlayerSessionPage.tsx:377
+msgid "player.actions.leave"
+msgstr "Verlassen"
+
+#: src/presentation/pages/PlayerSessionPage.tsx:377
+#~ msgid "Verlassen"
+#~ msgstr "Verlassen"
+
+#. js-lingui-explicit-id
+#: src/presentation/pages/QuizSelectionPage.tsx:130
+msgid "quizSelection.tryDifferentSearch"
+msgstr "Versuche einen anderen Suchbegriff"
+
+#: src/presentation/pages/QuizSelectionPage.tsx:130
+#~ msgid "Versuche einen anderen Suchbegriff"
+#~ msgstr "Versuche einen anderen Suchbegriff"
+
+#. js-lingui-explicit-id
+#: src/presentation/pages/ModeratorSessionPage.tsx:784
+msgid "moderator.useNavigation"
+msgstr "Verwende Navigation oben"
+
+#: src/presentation/pages/ModeratorSessionPage.tsx:748
+#~ msgid "Verwende Navigation oben"
+#~ msgstr "Verwende Navigation oben"
+
+#. js-lingui-explicit-id
+#: src/presentation/pages/ModeratorSessionPage.tsx:746
+msgid "common.next"
+msgstr "Vor"
+
+#: src/presentation/pages/ModeratorSessionPage.tsx:710
+#~ msgid "Vor"
+#~ msgstr "Vor"
+
+#. js-lingui-explicit-id
+#: src/presentation/atoms/TrueFalseInput.tsx:57
+msgid "input.trueOption"
+msgstr "Wahr"
+
+#: src/presentation/atoms/TrueFalseInput.tsx:57
+#~ msgid "Wahr"
+#~ msgstr "Wahr"
+
+#. js-lingui-explicit-id
+#: src/presentation/pages/QuizEditorPage.tsx:735
+msgid "quizEditor.trueOption"
+msgstr "Wahr (True)"
+
+#: src/presentation/pages/QuizEditorPage.tsx:737
+#~ msgid "Wahr (True)"
+#~ msgstr "Wahr (True)"
+
+#. js-lingui-explicit-id
+#: src/presentation/pages/HomePage.tsx:306
+msgid "home.toEditor"
+msgstr "Zum Editor"
+
+#: src/presentation/pages/HomePage.tsx:306
+#~ msgid "Zum Editor"
+#~ msgstr "Zum Editor"
+
+#. js-lingui-explicit-id
+#: src/presentation/pages/ModeratorSessionPage.tsx:701
+#: src/presentation/pages/PlayerSessionPage.tsx:356
+#: src/presentation/pages/QuizEditorPage.tsx:520
+msgid "common.back"
+msgstr "Zurück"
+
+#. js-lingui-explicit-id
+#: src/presentation/pages/ModeratorSessionPage.tsx:742
+msgid "common.previous"
+msgstr "Zurück"
+
+#: src/presentation/pages/ModeratorSessionPage.tsx:665
+#: src/presentation/pages/ModeratorSessionPage.tsx:706
+#: src/presentation/pages/PlayerSessionPage.tsx:356
+#: src/presentation/pages/QuizEditorPage.tsx:522
+#~ msgid "Zurück"
+#~ msgstr "Zurück"

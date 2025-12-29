@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+    elementFormDefault="qualified"
+    attributeFormDefault="unqualified">
+
+    <!-- Root Element -->
+    <xs:element name="quiz">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="metadata" type="MetadataType" minOccurs="0" />
+                <xs:element name="category" type="CategoryType" maxOccurs="unbounded" />
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <!-- Metadata (Optional) -->
+    <xs:complexType name="MetadataType">
+        <xs:sequence>
+            <xs:element name="title" type="xs:string" />
+            <xs:element name="author" type="xs:string" minOccurs="0" />
+            <xs:element name="description" type="xs:string" minOccurs="0" />
+            <xs:element name="version" type="xs:string" minOccurs="0" />
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- Category -->
+    <xs:complexType name="CategoryType">
+        <xs:sequence>
+            <xs:element name="question" type="QuestionType" maxOccurs="unbounded" />
+        </xs:sequence>
+        <xs:attribute name="id" type="xs:ID" use="required" />
+        <xs:attribute name="name" type="xs:string" use="required" />
+    </xs:complexType>
+
+    <!-- Base Question Type -->
+    <xs:complexType name="QuestionType">
+        <xs:sequence>
+            <xs:element name="prompt" type="xs:string" />
+            <xs:element name="image" type="xs:string" minOccurs="0" />
+            <xs:choice>
+                <xs:element name="inputText" type="InputTextType" />
+                <xs:element name="inputNumber" type="InputNumberType" />
+                <xs:element name="slider" type="SliderType" />
+                <xs:element name="multipleChoice" type="MultipleChoiceType" />
+                <xs:element name="buzzer" type="BuzzerType" />
+                <xs:element name="imageQuestion" type="ImageQuestionType" />
+                <xs:element name="hotspot" type="HotspotType" />
+                <xs:element name="sorting" type="SortingType" />
+            </xs:choice>
+        </xs:sequence>
+        <xs:attribute name="id" type="xs:ID" use="required" />
+        <xs:attribute name="type" type="QuestionTypeEnum" use="required" />
+    </xs:complexType>
+
+    <!-- Question Type Enumeration -->
+    <xs:simpleType name="QuestionTypeEnum">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="input-text" />
+            <xs:enumeration value="input-number" />
+            <xs:enumeration value="slider" />
+            <xs:enumeration value="multiple-choice" />
+            <xs:enumeration value="buzzer" />
+            <xs:enumeration value="image-question" />
+            <xs:enumeration value="hotspot" />
+            <xs:enumeration value="sorting" />
+        </xs:restriction>
+    </xs:simpleType>
+
+    <!-- 1. Input-Text Type -->
+    <xs:complexType name="InputTextType">
+        <xs:sequence>
+            <xs:element name="answers" type="TextAnswersType" />
+            <xs:element name="points" type="xs:positiveInteger" default="1" />
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="TextAnswersType">
+        <xs:sequence>
+            <xs:element name="answer" type="TextAnswerType" maxOccurs="unbounded" />
+        </xs:sequence>
+        <xs:attribute name="requiredCorrect" type="xs:positiveInteger" use="required" />
+    </xs:complexType>
+
+    <xs:complexType name="TextAnswerType">
+        <xs:simpleContent>
+            <xs:extension base="xs:string">
+                <xs:attribute name="correct" type="xs:boolean" use="required" />
+            </xs:extension>
+        </xs:simpleContent>
+    </xs:complexType>
+
+    <!-- 2. Input-Number Type -->
+    <xs:complexType name="InputNumberType">
+        <xs:sequence>
+            <xs:element name="correctValue" type="xs:decimal" />
+            <xs:element name="tolerance" type="xs:decimal" minOccurs="0" default="0" />
+            <xs:element name="points" type="xs:positiveInteger" default="1" />
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- 3. Slider / Schätzfrage Type -->
+    <xs:complexType name="SliderType">
+        <xs:sequence>
+            <xs:element name="min" type="xs:decimal" />
+            <xs:element name="max" type="xs:decimal" />
+            <xs:element name="step" type="xs:decimal" default="1" />
+            <xs:element name="correctValue" type="xs:decimal" />
+            <xs:element name="unit" type="xs:string" minOccurs="0" />
+            <xs:element name="points" type="xs:positiveInteger" default="2" />
+        </xs:sequence>
+        <xs:attribute name="autoEvaluate" type="xs:boolean" default="false" />
+    </xs:complexType>
+
+    <!-- 4. Multiple-Choice Type -->
+    <xs:complexType name="MultipleChoiceType">
+        <xs:sequence>
+            <xs:element name="options" type="OptionsType" />
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="OptionsType">
+        <xs:sequence>
+            <xs:element name="option" type="OptionType" minOccurs="2" maxOccurs="unbounded" />
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="OptionType">
+        <xs:simpleContent>
+            <xs:extension base="xs:string">
+                <xs:attribute name="id" type="xs:ID" use="required" />
+                <xs:attribute name="correct" type="xs:boolean" use="required" />
+            </xs:extension>
+        </xs:simpleContent>
+    </xs:complexType>
+
+    <!-- 5. Buzzer Type -->
+    <xs:complexType name="BuzzerType">
+        <xs:sequence>
+            <xs:element name="winnerPoints" type="xs:positiveInteger" default="3" />
+            <xs:element name="otherPoints" type="xs:nonNegativeInteger" default="1" />
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- 6. Image Question Type -->
+    <xs:complexType name="ImageQuestionType">
+        <xs:sequence>
+            <xs:element name="imageUrl" type="xs:string" />
+            <xs:element name="allowZoom" type="xs:boolean" default="true" />
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- 7. Hotspot Type -->
+    <xs:complexType name="HotspotType">
+        <xs:sequence>
+            <xs:element name="imageUrl" type="xs:string" />
+            <xs:element name="hotspots" type="HotspotsType" />
+            <xs:element name="points" type="xs:positiveInteger" default="1" />
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="HotspotsType">
+        <xs:sequence>
+            <xs:element name="hotspot" type="HotspotCoordinateType" maxOccurs="unbounded" />
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="HotspotCoordinateType">
+        <xs:attribute name="id" type="xs:ID" use="required" />
+        <xs:attribute name="x" type="xs:nonNegativeInteger" use="required" />
+        <xs:attribute name="y" type="xs:nonNegativeInteger" use="required" />
+        <xs:attribute name="radius" type="xs:positiveInteger" use="required" />
+        <xs:attribute name="label" type="xs:string" use="optional" />
+    </xs:complexType>
+
+    <!-- 8. Sorting Type -->
+    <xs:complexType name="SortingType">
+        <xs:sequence>
+            <xs:element name="items" type="SortingItemsType" />
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="SortingItemsType">
+        <xs:sequence>
+            <xs:element name="item" type="SortingItemType" minOccurs="2" maxOccurs="unbounded" />
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="SortingItemType">
+        <xs:simpleContent>
+            <xs:extension base="xs:string">
+                <xs:attribute name="id" type="xs:ID" use="required" />
+                <xs:attribute name="correctOrder" type="xs:positiveInteger" use="required" />
+            </xs:extension>
+        </xs:simpleContent>
+    </xs:complexType>
+
+</xs:schema>

@@ -1,0 +1,34 @@
+{
+	"folders": [
+		{
+			"name": "backend",
+			"path": "backend",
+			"language": "python"
+		},
+		{
+			"name": "frontend",
+			"path": "frontend",
+			"language": "javascript"
+		},
+		{
+			"name": "root",
+			"path": "."
+		}
+	],
+	"settings": {
+		"files.exclude": {
+			"**/__pycache__": true,
+			"**/.pytest_cache": true,
+			"**/build": true,
+			"**/.venv": true,
+			"backend": true,
+			"frontend": true,
+			"**/node_modules": true
+		},
+		"search.exclude": {
+			"**/__pycache__": true,
+			"**/build": true,
+			"**/.venv": true
+		}
+	}
+}
