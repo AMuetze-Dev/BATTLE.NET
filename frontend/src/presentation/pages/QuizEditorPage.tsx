@@ -1,78 +1,31 @@
 /**
  * Quiz Editor Page - Create and edit quiz question catalogs
+ *
+ * This page component orchestrates the quiz editing experience.
+ * Individual question type editors are delegated to specialized components.
  */
 import React, { useState, useEffect, useRef } from 'react';
-import styled from 'styled-components';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { FiPlus, FiTrash2, FiUpload, FiDownload, FiEdit2, FiMenu, FiFile, FiArrowLeft, FiSave, FiImage, FiFolder, FiUsers } from 'react-icons/fi';
 import { Trans } from '@lingui/react/macro';
 import JSZip from 'jszip';
 import { Button } from '../atoms/Button';
 import { Input } from '../atoms/Input';
-import { Card } from '../atoms/Card';
 import { Modal } from '../atoms/Modal';
 import { Icon } from '../atoms/Icon';
-import { FormGroup as FormGroupAtom } from '../atoms/FormGroup';
-import { IconButton as IconBtn } from '../atoms/IconButton';
 import { GameModeSelector as GameModeSelectorComponent, TeamConfigEditor } from '../molecules';
 import { Layout } from '../organisms/Layout';
+import { createQuestionEditor, getQuestionTypeAbbreviation, getAvailableQuestionTypes } from '../organisms/question-editors';
 import { api, QuizMetadata } from '../../services/api';
-import { colors, spacing } from '../../theme';
-import { GameMode, TeamConfig, TeamDefinition, TEAM_COLORS, createDefaultTeamConfig, createTeamDefinition } from '../../types/team.types';
+import { validateQuestion, getQuestionAnswerSummary, hasRequiredMedia, createQuestion, convertQuestionType } from '../../features/quiz-editor';
+import { GameMode, TeamConfig, TeamDefinition, createDefaultTeamConfig, createTeamDefinition } from '../../types/team.types';
+import type { EditorQuestion, EditorQuestionType, EditorAnswer } from '../../types/editor.types';
 import styles from './QuizEditorPage.module.css';
-
-interface Answer {
-	id: string;
-	text: string;
-	isCorrect: boolean;
-}
-
-interface Question {
-	id: string;
-	type: 'multiple-choice' | 'true-false' | 'text' | 'buzzer' | 'slider' | 'hotspot' | 'sorting' | 'matching' | 'audio' | 'image-choice' | 'geolocation';
-	question: string;
-	answers: Answer[];
-	correctAnswer: number;
-	correctAnswerText?: string;
-	textInputType?: 'text' | 'number';
-	points: number;
-	hint?: string;
-	imageUrl?: string;
-	imageData?: string; // Base64 encoded image for local storage/export
-	// Slider-specific fields
-	sliderMin?: number;
-	sliderMax?: number;
-	sliderStep?: number;
-	sliderUnit?: string;
-	sliderCorrectValue?: number;
-	// Hotspot-specific fields
-	hotspotX?: number; // 0-100 percentage
-	hotspotY?: number; // 0-100 percentage
-	hotspotAllowZoom?: boolean;
-	// Sorting-specific fields
-	sortingItems?: string[]; // Items in correct order
-	// Matching-specific fields
-	matchingPairs?: Array<{ id: string; left: string; right: string }>;
-	// Audio-specific fields
-	audioUrl?: string;
-	audioData?: string;
-	audioMaxPlays?: number;
-	audioTranscript?: string;
-	audioAnswerMode?: 'text' | 'multiple-choice';
-	// Image choice-specific fields
-	imageOptions?: Array<{ id: string; imageUrl: string; imageData?: string; alt: string; correct: boolean }>;
-	imageChoiceMultiSelect?: boolean;
-	// Geolocation-specific fields
-	geoMode?: 'image' | 'map';
-	geoCorrectX?: number;
-	geoCorrectY?: number;
-	geoTolerance?: number;
-}
 
 interface QuestionCatalog {
 	title: string;
 	description: string;
-	questions: Question[];
+	questions: EditorQuestion[];
 	gameMode: GameMode;
 	teamConfig: TeamConfig;
 }
@@ -89,7 +42,7 @@ export const QuizEditorPage: React.FC = () => {
 		gameMode: 'free-for-all',
 		teamConfig: createDefaultTeamConfig(),
 	});
-	const [editingQuestion, setEditingQuestion] = useState<Question | null>(null);
+	const [editingQuestion, setEditingQuestion] = useState<EditorQuestion | null>(null);
 	const [showQuestionModal, setShowQuestionModal] = useState(false);
 	const [showLoadModal, setShowLoadModal] = useState(false);
 	const [showTeamModal, setShowTeamModal] = useState(false);
@@ -116,7 +69,7 @@ export const QuizEditorPage: React.FC = () => {
 			setCatalog({
 				title: quiz.title,
 				description: quiz.description || '',
-				questions: quiz.questions || [],
+				questions: (quiz.questions as unknown as EditorQuestion[]) || [],
 				gameMode: quiz.gameMode || 'free-for-all',
 				teamConfig: normalizedTeamConfig,
 			});
@@ -228,101 +181,20 @@ export const QuizEditorPage: React.FC = () => {
 		setShowTeamModal(false);
 	};
 
-	const createNewQuestion = (): Question => ({
-		id: `q-${Date.now()}`,
-		type: 'buzzer',
-		question: '',
-		answers: [],
-		correctAnswer: 0,
-		correctAnswerText: '',
-		points: 5,
-	});
-
-	const addQuestion = () => {
-		const newQuestion = createNewQuestion();
+	const addQuestion = (): void => {
+		const newQuestion = createQuestion('buzzer');
 		setEditingQuestion(newQuestion);
 		setShowQuestionModal(true);
 	};
 
-	const saveQuestion = () => {
+	const saveQuestion = (): void => {
 		if (!editingQuestion) return;
 
-		// Validate slider question
-		if (editingQuestion.type === 'slider') {
-			const min = editingQuestion.sliderMin ?? 0;
-			const max = editingQuestion.sliderMax ?? 100;
-			const correctValue = editingQuestion.sliderCorrectValue ?? 50;
-
-			if (min >= max) {
-				alert('Fehler: Das Minimum muss kleiner als das Maximum sein.');
-				return;
-			}
-
-			if (correctValue < min || correctValue > max) {
-				alert(`Fehler: Der korrekte Wert (${correctValue}) muss zwischen ${min} und ${max} liegen.`);
-				return;
-			}
-		}
-
-		// Validate hotspot question
-		if (editingQuestion.type === 'hotspot') {
-			if (!editingQuestion.imageData && !editingQuestion.imageUrl) {
-				alert('Fehler: Hotspot-Fragen benötigen ein Bild.');
-				return;
-			}
-		}
-
-		// Validate matching question
-		if (editingQuestion.type === 'matching') {
-			const pairs = editingQuestion.matchingPairs || [];
-			if (pairs.length < 2) {
-				alert('Fehler: Paarzuordnungs-Fragen benötigen mindestens 2 Paare.');
-				return;
-			}
-			const hasEmptyPair = pairs.some((p) => !p.left.trim() || !p.right.trim());
-			if (hasEmptyPair) {
-				alert('Fehler: Alle Paare müssen ausgefüllt sein.');
-				return;
-			}
-		}
-
-		// Validate audio question
-		if (editingQuestion.type === 'audio') {
-			if (!editingQuestion.audioData && !editingQuestion.audioUrl) {
-				alert('Fehler: Audio-Fragen benötigen eine Audiodatei.');
-				return;
-			}
-		}
-
-		// Validate image-choice question
-		if (editingQuestion.type === 'image-choice') {
-			const options = editingQuestion.imageOptions || [];
-			if (options.length < 2) {
-				alert('Fehler: Bildauswahl-Fragen benötigen mindestens 2 Optionen.');
-				return;
-			}
-			const hasEmptyImage = options.some((o) => !o.imageData && !o.imageUrl);
-			if (hasEmptyImage) {
-				alert('Fehler: Alle Bildoptionen müssen ein Bild haben.');
-				return;
-			}
-			const hasCorrect = options.some((o) => o.correct);
-			if (!hasCorrect) {
-				alert('Fehler: Mindestens eine Bildoption muss als korrekt markiert sein.');
-				return;
-			}
-		}
-
-		// Validate geolocation question
-		if (editingQuestion.type === 'geolocation') {
-			if (editingQuestion.geoMode !== 'map' && !editingQuestion.imageData && !editingQuestion.imageUrl) {
-				alert('Fehler: Geolocation-Fragen im Bildmodus benötigen ein Hintergrundbild.');
-				return;
-			}
-			if (editingQuestion.geoCorrectX === undefined || editingQuestion.geoCorrectY === undefined) {
-				alert('Fehler: Bitte markiere die korrekte Position auf dem Bild.');
-				return;
-			}
+		// Use centralized validation service
+		const validation = validateQuestion(editingQuestion);
+		if (!validation.isValid) {
+			alert(`Fehler: ${validation.errors[0]}`);
+			return;
 		}
 
 		const questionIndex = catalog.questions.findIndex((q) => q.id === editingQuestion.id);
@@ -339,12 +211,12 @@ export const QuizEditorPage: React.FC = () => {
 		setEditingQuestion(null);
 	};
 
-	const editQuestion = (question: Question) => {
+	const editQuestion = (question: EditorQuestion): void => {
 		setEditingQuestion({ ...question });
 		setShowQuestionModal(true);
 	};
 
-	const deleteQuestion = (questionId: string) => {
+	const deleteQuestion = (questionId: string): void => {
 		setCatalog({
 			...catalog,
 			questions: catalog.questions.filter((q) => q.id !== questionId),
@@ -379,155 +251,30 @@ export const QuizEditorPage: React.FC = () => {
 		setCatalog({ ...catalog, questions: newQuestions });
 	};
 
-	const updateQuestionField = (field: keyof Question, value: any) => {
+	/**
+	 * Update a field on the editing question.
+	 * Uses the factory service for type changes to ensure proper initialization.
+	 */
+	const updateQuestionField = <K extends keyof EditorQuestion>(field: K, value: EditorQuestion[K]): void => {
 		if (!editingQuestion) return;
 
-		// Wenn der Typ gewechselt wird, initialisiere die entsprechenden Felder
+		// When type changes, use the factory service for proper field initialization
 		if (field === 'type') {
-			const newQuestion = { ...editingQuestion, [field]: value };
-
-			if (value === 'multiple-choice') {
-				newQuestion.answers = [
-					{ id: 'a1', text: '', isCorrect: true },
-					{ id: 'a2', text: '', isCorrect: false },
-					{ id: 'a3', text: '', isCorrect: false },
-					{ id: 'a4', text: '', isCorrect: false },
-				];
-				newQuestion.correctAnswer = 0;
-				delete newQuestion.correctAnswerText;
-				delete newQuestion.textInputType;
-			} else if (value === 'true-false') {
-				newQuestion.answers = [];
-				newQuestion.correctAnswer = 1; // Standard: Wahr
-				delete newQuestion.correctAnswerText;
-				delete newQuestion.textInputType;
-			} else if (value === 'text') {
-				newQuestion.answers = [];
-				newQuestion.correctAnswerText = '';
-				newQuestion.textInputType = 'text';
-				newQuestion.correctAnswer = 0;
-			} else if (value === 'buzzer') {
-				newQuestion.answers = [];
-				newQuestion.correctAnswerText = '';
-				newQuestion.correctAnswer = 0;
-				delete newQuestion.textInputType;
-				delete newQuestion.sliderMin;
-				delete newQuestion.sliderMax;
-				delete newQuestion.sliderStep;
-				delete newQuestion.sliderUnit;
-				delete newQuestion.sliderCorrectValue;
-				delete newQuestion.hotspotX;
-				delete newQuestion.hotspotY;
-				delete newQuestion.hotspotAllowZoom;
-				delete newQuestion.sortingItems;
-			} else if (value === 'slider') {
-				newQuestion.answers = [];
-				newQuestion.correctAnswer = 0;
-				newQuestion.sliderMin = 0;
-				newQuestion.sliderMax = 100;
-				newQuestion.sliderStep = 1;
-				newQuestion.sliderUnit = '';
-				newQuestion.sliderCorrectValue = 50;
-				delete newQuestion.correctAnswerText;
-				delete newQuestion.textInputType;
-				delete newQuestion.hotspotX;
-				delete newQuestion.hotspotY;
-				delete newQuestion.hotspotAllowZoom;
-				delete newQuestion.sortingItems;
-			} else if (value === 'hotspot') {
-				newQuestion.answers = [];
-				newQuestion.correctAnswer = 0;
-				newQuestion.hotspotX = 50;
-				newQuestion.hotspotY = 50;
-				newQuestion.hotspotAllowZoom = true;
-				delete newQuestion.correctAnswerText;
-				delete newQuestion.textInputType;
-				delete newQuestion.sliderMin;
-				delete newQuestion.sliderMax;
-				delete newQuestion.sliderStep;
-				delete newQuestion.sliderUnit;
-				delete newQuestion.sliderCorrectValue;
-				delete newQuestion.sortingItems;
-			} else if (value === 'sorting') {
-				newQuestion.answers = [];
-				newQuestion.correctAnswer = 0;
-				newQuestion.sortingItems = ['Element 1', 'Element 2', 'Element 3'];
-				delete newQuestion.correctAnswerText;
-				delete newQuestion.textInputType;
-				delete newQuestion.sliderMin;
-				delete newQuestion.sliderMax;
-				delete newQuestion.sliderStep;
-				delete newQuestion.sliderUnit;
-				delete newQuestion.sliderCorrectValue;
-				delete newQuestion.hotspotX;
-				delete newQuestion.hotspotY;
-				delete newQuestion.hotspotAllowZoom;
-			} else if (value === 'matching') {
-				newQuestion.answers = [];
-				newQuestion.correctAnswer = 0;
-				newQuestion.matchingPairs = [
-					{ id: 'p1', left: '', right: '' },
-					{ id: 'p2', left: '', right: '' },
-				];
-				delete newQuestion.correctAnswerText;
-				delete newQuestion.textInputType;
-			} else if (value === 'audio') {
-				newQuestion.answers = [];
-				newQuestion.correctAnswer = 0;
-				newQuestion.audioMaxPlays = 3;
-				newQuestion.audioAnswerMode = 'text';
-				newQuestion.correctAnswerText = '';
-				delete newQuestion.textInputType;
-			} else if (value === 'image-choice') {
-				newQuestion.answers = [];
-				newQuestion.correctAnswer = 0;
-				newQuestion.imageOptions = [
-					{ id: 'opt1', imageUrl: '', alt: 'Option A', correct: true },
-					{ id: 'opt2', imageUrl: '', alt: 'Option B', correct: false },
-				];
-				newQuestion.imageChoiceMultiSelect = false;
-				delete newQuestion.correctAnswerText;
-				delete newQuestion.textInputType;
-			} else if (value === 'geolocation') {
-				newQuestion.answers = [];
-				newQuestion.correctAnswer = 0;
-				newQuestion.geoMode = 'image';
-				newQuestion.geoTolerance = 5;
-				newQuestion.geoCorrectX = 50;
-				newQuestion.geoCorrectY = 50;
-				delete newQuestion.correctAnswerText;
-				delete newQuestion.textInputType;
-			}
-
-			setEditingQuestion(newQuestion);
+			const newType = value as EditorQuestionType;
+			const convertedQuestion = convertQuestionType(editingQuestion, newType);
+			setEditingQuestion(convertedQuestion);
 		} else {
 			setEditingQuestion({ ...editingQuestion, [field]: value });
 		}
 	};
 
-	const updateAnswer = (index: number, text: string) => {
-		if (!editingQuestion) return;
-		const newAnswers = [...editingQuestion.answers];
-		newAnswers[index].text = text;
-		setEditingQuestion({ ...editingQuestion, answers: newAnswers });
-	};
-
-	const setCorrectAnswer = (index: number) => {
-		if (!editingQuestion) return;
-		const newAnswers = editingQuestion.answers.map((answer, i) => ({
-			...answer,
-			isCorrect: i === index,
-		}));
-		setEditingQuestion({ ...editingQuestion, answers: newAnswers, correctAnswer: index });
-	};
-
 	// Team configuration functions
-	const toggleGameMode = (mode: GameMode) => {
+	const toggleGameMode = (mode: GameMode): void => {
 		const newTeamConfig = { ...catalog.teamConfig, enabled: mode === 'team' };
 		setCatalog({ ...catalog, gameMode: mode, teamConfig: newTeamConfig });
 	};
 
-	const addTeam = () => {
+	const addTeam = (): void => {
 		const newTeam = createTeamDefinition(catalog.teamConfig.teams.length);
 		const updatedTeams = [...catalog.teamConfig.teams, newTeam];
 		setCatalog({
@@ -536,7 +283,7 @@ export const QuizEditorPage: React.FC = () => {
 		});
 	};
 
-	const removeTeam = (teamId: string) => {
+	const removeTeam = (teamId: string): void => {
 		if (catalog.teamConfig.teams.length <= 2) {
 			alert('Mindestens 2 Teams erforderlich');
 			return;
@@ -548,7 +295,7 @@ export const QuizEditorPage: React.FC = () => {
 		});
 	};
 
-	const updateTeam = (teamId: string, field: keyof TeamDefinition, value: string) => {
+	const updateTeam = (teamId: string, field: keyof TeamDefinition, value: string): void => {
 		const updatedTeams = catalog.teamConfig.teams.map((t) => (t.id === teamId ? { ...t, [field]: value } : t));
 		setCatalog({
 			...catalog,
@@ -600,12 +347,16 @@ export const QuizEditorPage: React.FC = () => {
 				xmlParts.push(`      <correctAnswerIndex>${question.correctAnswer}</correctAnswerIndex>`);
 			} else if (question.type === 'true-false') {
 				xmlParts.push(`      <correctAnswer>${question.correctAnswer === 1 ? 'true' : 'false'}</correctAnswer>`);
-			} else if (question.type === 'text' || question.type === 'buzzer') {
+			} else if (question.type === 'text') {
 				if (question.correctAnswerText) {
 					xmlParts.push(`      <correctAnswer>${escapeXml(question.correctAnswerText)}</correctAnswer>`);
 				}
 				if (question.textInputType) {
 					xmlParts.push(`      <inputType>${question.textInputType}</inputType>`);
+				}
+			} else if (question.type === 'buzzer') {
+				if (question.correctAnswerText) {
+					xmlParts.push(`      <correctAnswer>${escapeXml(question.correctAnswerText)}</correctAnswer>`);
 				}
 			} else if (question.type === 'slider') {
 				xmlParts.push(`      <sliderMin>${question.sliderMin ?? 0}</sliderMin>`);
@@ -713,26 +464,22 @@ export const QuizEditorPage: React.FC = () => {
 			const description = xmlDoc.querySelector('quiz > description')?.textContent || '';
 			const questionElements = xmlDoc.querySelectorAll('quiz > questions > question');
 
-			const questions: Question[] = [];
+			const questions: EditorQuestion[] = [];
 
 			questionElements.forEach((qElement) => {
 				const id = qElement.getAttribute('id') || `q-${Date.now()}-${questions.length}`;
-				const type = (qElement.querySelector('type')?.textContent || 'buzzer') as Question['type'];
-				const question = qElement.querySelector('text')?.textContent || '';
+				const type = (qElement.querySelector('type')?.textContent || 'buzzer') as EditorQuestionType;
+				const questionText = qElement.querySelector('text')?.textContent || '';
 				const points = parseInt(qElement.querySelector('points')?.textContent || '1000');
 				const hint = qElement.querySelector('hint')?.textContent || undefined;
 				const imageName = qElement.querySelector('image')?.textContent || undefined;
 				const imageUrl = qElement.querySelector('imageUrl')?.textContent || undefined;
 
-				const newQuestion: Question = {
-					id,
-					type,
-					question,
-					answers: [],
-					correctAnswer: 0,
-					points,
-					hint,
-				};
+				// Use factory to create base question with correct type
+				const newQuestion = createQuestion(type, id);
+				newQuestion.question = questionText;
+				newQuestion.points = points;
+				newQuestion.hint = hint;
 
 				// Load image if present
 				if (imageName && imagesMap.has(imageName)) {
@@ -741,9 +488,10 @@ export const QuizEditorPage: React.FC = () => {
 					newQuestion.imageUrl = imageUrl;
 				}
 
-				if (type === 'multiple-choice') {
+				// Parse type-specific fields
+				if (newQuestion.type === 'multiple-choice') {
 					const answerElements = qElement.querySelectorAll('answers > answer');
-					const answers: Answer[] = [];
+					const answers: EditorAnswer[] = [];
 					let correctIndex = 0;
 
 					answerElements.forEach((aElement, index) => {
@@ -762,28 +510,28 @@ export const QuizEditorPage: React.FC = () => {
 
 					newQuestion.answers = answers;
 					newQuestion.correctAnswer = correctIndex;
-				} else if (type === 'true-false') {
+				} else if (newQuestion.type === 'true-false') {
 					const correctAnswer = qElement.querySelector('correctAnswer')?.textContent;
 					newQuestion.correctAnswer = correctAnswer === 'true' ? 1 : 0;
-				} else if (type === 'text' || type === 'buzzer') {
+				} else if (newQuestion.type === 'text') {
 					const correctAnswerText = qElement.querySelector('correctAnswer')?.textContent || '';
 					newQuestion.correctAnswerText = correctAnswerText;
-
-					if (type === 'text') {
-						const inputType = qElement.querySelector('inputType')?.textContent as 'text' | 'number';
-						newQuestion.textInputType = inputType || 'text';
-					}
-				} else if (type === 'slider') {
+					const inputType = qElement.querySelector('inputType')?.textContent as 'text' | 'number';
+					newQuestion.textInputType = inputType || 'text';
+				} else if (newQuestion.type === 'buzzer') {
+					const correctAnswerText = qElement.querySelector('correctAnswer')?.textContent || '';
+					newQuestion.correctAnswerText = correctAnswerText;
+				} else if (newQuestion.type === 'slider') {
 					newQuestion.sliderMin = parseFloat(qElement.querySelector('sliderMin')?.textContent || '0');
 					newQuestion.sliderMax = parseFloat(qElement.querySelector('sliderMax')?.textContent || '100');
 					newQuestion.sliderStep = parseFloat(qElement.querySelector('sliderStep')?.textContent || '1');
 					newQuestion.sliderUnit = qElement.querySelector('sliderUnit')?.textContent || '';
 					newQuestion.sliderCorrectValue = parseFloat(qElement.querySelector('correctAnswer')?.textContent || '50');
-				} else if (type === 'hotspot') {
+				} else if (newQuestion.type === 'hotspot') {
 					newQuestion.hotspotX = parseFloat(qElement.querySelector('hotspotX')?.textContent || '50');
 					newQuestion.hotspotY = parseFloat(qElement.querySelector('hotspotY')?.textContent || '50');
 					newQuestion.hotspotAllowZoom = qElement.querySelector('hotspotAllowZoom')?.textContent !== 'false';
-				} else if (type === 'sorting') {
+				} else if (newQuestion.type === 'sorting') {
 					const itemElements = qElement.querySelectorAll('sortingItems > item');
 					const items: string[] = [];
 					itemElements.forEach((itemEl) => {
@@ -812,6 +560,32 @@ export const QuizEditorPage: React.FC = () => {
 		// Reset input
 		if (fileInputRef.current) {
 			fileInputRef.current.value = '';
+		}
+	};
+
+	// Helper function to get the appropriate CSS class for question type tag
+	const getTypeTagClass = (type: EditorQuestionType): string => {
+		switch (type) {
+			case 'multiple-choice':
+				return styles.typeTagMultipleChoice;
+			case 'true-false':
+				return styles.typeTagTrueFalse;
+			case 'text':
+				return styles.typeTagText;
+			case 'buzzer':
+				return styles.typeTagBuzzer;
+			case 'slider':
+				return styles.typeTagSlider;
+			case 'hotspot':
+				return styles.typeTagHotspot;
+			case 'sorting':
+				return styles.typeTagSorting;
+			case 'matching':
+				return styles.typeTagMatching;
+			case 'image-choice':
+				return styles.typeTagImageChoice;
+			default:
+				return styles.typeTagDefault;
 		}
 	};
 
@@ -893,14 +667,14 @@ export const QuizEditorPage: React.FC = () => {
 						) : (
 							<div className={styles.questionsTable}>
 								{catalog.questions.map((question, index) => (
-									<QuestionRow key={question.id} draggable onDragStart={(e) => handleDragStart(e, index)} onDragEnd={handleDragEnd} onDragOver={handleDragOver} onDrop={(e) => handleDrop(e, index)}>
-										<DragHandle title="Ziehen zum Neu-Sortieren">
+									<div key={question.id} className={styles.questionRow} draggable onDragStart={(e) => handleDragStart(e, index)} onDragEnd={handleDragEnd} onDragOver={handleDragOver} onDrop={(e) => handleDrop(e, index)}>
+										<div className={styles.dragHandle} title="Ziehen zum Neu-Sortieren">
 											<FiMenu />
-										</DragHandle>
+										</div>
 
-										<QuestionNumber>{index + 1}</QuestionNumber>
+										<div className={styles.questionNumber}>{index + 1}</div>
 
-										<QuestionTypeTag type={question.type}>
+										<div className={`${styles.typeTag} ${getTypeTagClass(question.type)}`}>
 											{question.type === 'multiple-choice' && 'MC'}
 											{question.type === 'true-false' && 'W/F'}
 											{question.type === 'text' && 'TXT'}
@@ -909,13 +683,11 @@ export const QuizEditorPage: React.FC = () => {
 											{question.type === 'hotspot' && 'HSP'}
 											{question.type === 'sorting' && 'SRT'}
 											{question.type === 'matching' && 'MTH'}
-											{question.type === 'audio' && 'AUD'}
 											{question.type === 'image-choice' && 'IMG'}
-											{question.type === 'geolocation' && 'GEO'}
-										</QuestionTypeTag>
-										<QuestionTextCell onClick={() => editQuestion(question)}>
-											<QuestionTextMain>{question.question || <Trans id="quizEditor.untitled">Ohne Titel</Trans>}</QuestionTextMain>
-											<QuestionTextSub>
+										</div>
+										<div className={styles.questionTextCell} onClick={() => editQuestion(question)}>
+											<div className={styles.questionTextMain}>{question.question || <Trans id="quizEditor.untitled">Ohne Titel</Trans>}</div>
+											<div className={styles.questionTextSub}>
 												{question.type === 'multiple-choice' && question.answers.length > 0 && (
 													<>
 														<Icon name="check" size="xs" color="success" /> {question.answers.find((a) => a.isCorrect)?.text || 'Nicht festgelegt'}
@@ -957,43 +729,25 @@ export const QuizEditorPage: React.FC = () => {
 														<Icon name="check" size="xs" color="success" /> {question.matchingPairs.length} Paare
 													</>
 												)}
-												{question.type === 'audio' && (
-													<>
-														{question.audioUrl || question.audioData ? (
-															<>
-																<Icon name="check" size="xs" color="success" /> {question.audioMaxPlays || 3}x abspielen
-															</>
-														) : (
-															<>
-																<Icon name="alert-triangle" size="xs" color="warning" /> Audio erforderlich
-															</>
-														)}
-													</>
-												)}
 												{question.type === 'image-choice' && question.imageOptions && (
 													<>
 														<Icon name="check" size="xs" color="success" /> {question.imageOptions.length} Bilder
 													</>
 												)}
-												{question.type === 'geolocation' && (
-													<>
-														<Icon name="check" size="xs" color="success" /> {question.geoMode === 'map' ? 'Karte' : 'Bild'} ({question.geoTolerance || 5}% Toleranz)
-													</>
-												)}
-											</QuestionTextSub>
-										</QuestionTextCell>
+											</div>
+										</div>
 
-										<PointsCell>{question.points}</PointsCell>
+										<div className={styles.pointsCell}>{question.points}</div>
 
-										<ActionsCell>
-											<IconButton onClick={() => editQuestion(question)} title="Bearbeiten">
+										<div className={styles.actionsCell}>
+											<button className={styles.iconButton} onClick={() => editQuestion(question)} title="Bearbeiten">
 												<FiEdit2 />
-											</IconButton>
-											<IconButton onClick={() => deleteQuestion(question.id)} title="Löschen" danger>
+											</button>
+											<button className={`${styles.iconButton} ${styles.iconButtonDanger}`} onClick={() => deleteQuestion(question.id)} title="Löschen">
 												<FiTrash2 />
-											</IconButton>
-										</ActionsCell>
-									</QuestionRow>
+											</button>
+										</div>
+									</div>
 								))}
 							</div>
 						)}
@@ -1003,13 +757,13 @@ export const QuizEditorPage: React.FC = () => {
 				{/* Question Editor Modal */}
 				<Modal isOpen={showQuestionModal} onClose={() => setShowQuestionModal(false)} title="Frage bearbeiten" size="lg" closeOnOverlayClick={false}>
 					{editingQuestion && (
-						<EditorForm>
-							<FormRow>
-								<FormGroup>
+						<div className={styles.editorForm}>
+							<div className={styles.formRow}>
+								<div className={styles.formGroup}>
 									<label>
 										<Trans id="quizEditor.questionType">Fragetyp</Trans>
 									</label>
-									<select value={editingQuestion.type} onChange={(e) => updateQuestionField('type', e.target.value)}>
+									<select value={editingQuestion.type} onChange={(e) => updateQuestionField('type', e.target.value as EditorQuestionType)}>
 										<option value="multiple-choice">Multiple Choice</option>
 										<option value="true-false">Wahr/Falsch</option>
 										<option value="text">Texteingabe</option>
@@ -1018,27 +772,26 @@ export const QuizEditorPage: React.FC = () => {
 										<option value="hotspot">Hotspot (Bildmarkierung)</option>
 										<option value="sorting">Sortieraufgabe</option>
 										<option value="matching">Paarzuordnung</option>
-										<option value="audio">Audiofrage</option>
 										<option value="image-choice">Bildauswahl</option>
-										<option value="geolocation">Geolocation</option>
 									</select>
-								</FormGroup>
-							</FormRow>
+								</div>
+							</div>
 
-							<FormGroup>
+							<div className={styles.formGroup}>
 								<Input label="Frage" value={editingQuestion.question} onChange={(e) => updateQuestionField('question', e.target.value)} placeholder="Stelle deine Frage..." fullWidth />
-							</FormGroup>
+							</div>
 
 							{/* Image Upload Section */}
-							<FormGroup>
+							<div className={styles.formGroup}>
 								<label>
 									<Trans id="quizEditor.imageOptional">Bild (optional)</Trans>
 								</label>
-								<ImageUploadContainer>
+								<div className={styles.imageUploadContainer}>
 									{editingQuestion.imageData || editingQuestion.imageUrl ? (
-										<ImagePreviewContainer>
-											<ImagePreview src={editingQuestion.imageData || editingQuestion.imageUrl} alt="Fragebild" />
-											<RemoveImageButton
+										<div className={styles.imagePreviewContainer}>
+											<img className={styles.imagePreview} src={editingQuestion.imageData || editingQuestion.imageUrl} alt="Fragebild" />
+											<button
+												className={styles.removeImageButton}
 												onClick={() => {
 													if (editingQuestion) {
 														setEditingQuestion({ ...editingQuestion, imageData: undefined, imageUrl: undefined });
@@ -1046,11 +799,12 @@ export const QuizEditorPage: React.FC = () => {
 												}}
 											>
 												<FiTrash2 /> <Trans id="common.remove">Entfernen</Trans>
-											</RemoveImageButton>
-										</ImagePreviewContainer>
+											</button>
+										</div>
 									) : (
 										<>
-											<ImageDropZone
+											<div
+												className={styles.imageDropZone}
 												onDragOver={(e) => {
 													e.preventDefault();
 													e.stopPropagation();
@@ -1072,7 +826,7 @@ export const QuizEditorPage: React.FC = () => {
 												<span>
 													<Trans id="quizEditor.dragImageHere">Bild hierher ziehen oder</Trans>
 												</span>
-												<ImageUploadLabel>
+												<label className={styles.imageUploadLabel}>
 													<input
 														type="file"
 														accept="image/*"
@@ -1089,490 +843,102 @@ export const QuizEditorPage: React.FC = () => {
 														}}
 													/>
 													<Trans id="quizEditor.selectFile">Datei auswählen</Trans>
-												</ImageUploadLabel>
-											</ImageDropZone>
+												</label>
+											</div>
 											<div style={{ textAlign: 'center', margin: '8px 0' }}>
 												<Trans id="common.or">oder</Trans>
 											</div>
 											<Input label="" value={editingQuestion.imageUrl || ''} onChange={(e) => updateQuestionField('imageUrl', e.target.value)} placeholder="Bild-URL eingeben..." fullWidth />
 										</>
 									)}
-								</ImageUploadContainer>
-							</FormGroup>
+								</div>
+							</div>
 
-							{editingQuestion.type === 'multiple-choice' && (
-								<AnswersSection>
-									<label>
-										<Trans id="quizEditor.answersLabel">Antworten (Wähle die korrekte Antwort)</Trans>
-									</label>
-									{editingQuestion.answers.map((answer, index) => (
-										<AnswerRow key={answer.id} isCorrect={answer.isCorrect}>
-											<CorrectRadio type="radio" name="correctAnswer" checked={answer.isCorrect} onChange={() => setCorrectAnswer(index)} title="Als korrekte Antwort markieren" />
-											<CorrectLabel isCorrect={answer.isCorrect}>
-												{answer.isCorrect ? (
-													<>
-														<Icon name="check" size="xs" color="success" /> <Trans id="quizEditor.markedCorrect">Korrekt</Trans>
-													</>
-												) : (
-													<Trans id="quizEditor.answerNumber">Antwort {index + 1}</Trans>
-												)}
-											</CorrectLabel>
-											<Input value={answer.text} onChange={(e) => updateAnswer(index, e.target.value)} placeholder={`Antwort ${index + 1}`} fullWidth />
-										</AnswerRow>
-									))}
-								</AnswersSection>
-							)}
-
-							{editingQuestion.type === 'true-false' && (
-								<FormGroup>
-									<label>
-										<Trans id="quizEditor.correctAnswer">Korrekte Antwort</Trans>
-									</label>
-									<TrueFalseOptions>
-										<TrueFalseOption selected={editingQuestion.correctAnswer === 1} onClick={() => updateQuestionField('correctAnswer', 1)}>
-											<input type="radio" checked={editingQuestion.correctAnswer === 1} readOnly />
-											<span>
-												<Trans id="quizEditor.trueOption">Wahr (True)</Trans>
-											</span>
-										</TrueFalseOption>
-										<TrueFalseOption selected={editingQuestion.correctAnswer === 0} onClick={() => updateQuestionField('correctAnswer', 0)}>
-											<input type="radio" checked={editingQuestion.correctAnswer === 0} readOnly />
-											<span>
-												<Trans id="quizEditor.falseOption">Falsch (False)</Trans>
-											</span>
-										</TrueFalseOption>
-									</TrueFalseOptions>
-								</FormGroup>
-							)}
-
-							{editingQuestion.type === 'text' && (
-								<>
-									<FormGroup>
-										<label>
-											<Trans id="quizEditor.inputType">Eingabetyp</Trans>
-										</label>
-										<select value={editingQuestion.textInputType || 'text'} onChange={(e) => updateQuestionField('textInputType', e.target.value)}>
-											<option value="text">Text</option>
-											<option value="number">
-												<Trans id="quizEditor.numbersOnly">Nur Zahlen</Trans>
-											</option>
-										</select>
-									</FormGroup>
-									<FormGroup>
-										<Input label="Korrekte Antwort" type={editingQuestion.textInputType || 'text'} value={editingQuestion.correctAnswerText || ''} onChange={(e) => updateQuestionField('correctAnswerText', e.target.value)} placeholder="Gib die korrekte Antwort ein..." fullWidth />
-									</FormGroup>
-								</>
-							)}
-
-							{editingQuestion.type === 'buzzer' && (
-								<FormGroup>
-									<Input label="Korrekte Antwort" value={editingQuestion.correctAnswerText || ''} onChange={(e) => updateQuestionField('correctAnswerText', e.target.value)} placeholder="Gib die korrekte Antwort ein..." fullWidth />
-								</FormGroup>
-							)}
-
-							{editingQuestion.type === 'slider' && (
-								<>
-									<FormRow>
-										<FormGroup>
-											<Input label="Minimum" type="number" value={editingQuestion.sliderMin ?? 0} onChange={(e) => updateQuestionField('sliderMin', parseFloat(e.target.value) || 0)} fullWidth />
-										</FormGroup>
-										<FormGroup>
-											<Input label="Maximum" type="number" value={editingQuestion.sliderMax ?? 100} onChange={(e) => updateQuestionField('sliderMax', parseFloat(e.target.value) || 100)} fullWidth />
-										</FormGroup>
-									</FormRow>
-									<FormRow>
-										<FormGroup>
-											<Input label="Schrittweite" type="number" value={editingQuestion.sliderStep ?? 1} onChange={(e) => updateQuestionField('sliderStep', parseFloat(e.target.value) || 1)} placeholder="z.B. 0.1, 0.5, 1" fullWidth />
-										</FormGroup>
-										<FormGroup>
-											<Input label="Einheit (optional)" type="text" value={editingQuestion.sliderUnit || ''} onChange={(e) => updateQuestionField('sliderUnit', e.target.value)} placeholder="z.B. km, Jahre, €" fullWidth />
-										</FormGroup>
-									</FormRow>
-									<FormGroup>
-										<Input label="Korrekte Antwort" type="number" value={editingQuestion.sliderCorrectValue ?? 50} onChange={(e) => updateQuestionField('sliderCorrectValue', parseFloat(e.target.value) || 0)} fullWidth />
-										<SliderPreview>
-											<SliderPreviewLabel>Vorschau:</SliderPreviewLabel>
-											<SliderPreviewValue>
-												{editingQuestion.sliderCorrectValue ?? 50}
-												{editingQuestion.sliderUnit ? ` ${editingQuestion.sliderUnit}` : ''}
-											</SliderPreviewValue>
-											<SliderPreviewRange>
-												(von {editingQuestion.sliderMin ?? 0} bis {editingQuestion.sliderMax ?? 100})
-											</SliderPreviewRange>
-										</SliderPreview>
-									</FormGroup>
-								</>
-							)}
-
-							{editingQuestion.type === 'hotspot' && (
-								<>
-									{editingQuestion.imageData || editingQuestion.imageUrl ? (
-										<FormGroup>
-											<label>Korrekte Position markieren (Klicke auf das Bild)</label>
-											<HotspotEditorContainer>
-												<HotspotImageWrapper>
-													<HotspotEditorImage
-														src={editingQuestion.imageData || editingQuestion.imageUrl}
-														alt="Hotspot Bild"
-														onClick={(e) => {
-															const rect = e.currentTarget.getBoundingClientRect();
-															const x = ((e.clientX - rect.left) / rect.width) * 100;
-															const y = ((e.clientY - rect.top) / rect.height) * 100;
-															setEditingQuestion({
-																...editingQuestion,
-																hotspotX: Math.max(0, Math.min(100, x)),
-																hotspotY: Math.max(0, Math.min(100, y)),
-															});
-														}}
-													/>
-													{editingQuestion.hotspotX !== undefined && editingQuestion.hotspotY !== undefined && (
-														<HotspotMarker
-															style={{
-																left: `${editingQuestion.hotspotX}%`,
-																top: `${editingQuestion.hotspotY}%`,
-															}}
-														/>
-													)}
-												</HotspotImageWrapper>
-											</HotspotEditorContainer>
-											<HotspotCoords>
-												Position: X = {editingQuestion.hotspotX?.toFixed(1)}%, Y = {editingQuestion.hotspotY?.toFixed(1)}%
-											</HotspotCoords>
-										</FormGroup>
+							{/* Audio Upload Section */}
+							<div className={styles.formGroup}>
+								<label>
+									<Trans id="quizEditor.audioOptional">Audio (optional)</Trans>
+								</label>
+								<div className={styles.audioUploadContainer}>
+									{editingQuestion.audioData || editingQuestion.audioUrl ? (
+										<div className={styles.audioPreviewContainer}>
+											<audio controls src={editingQuestion.audioData || editingQuestion.audioUrl} style={{ width: '100%' }} />
+											<button
+												className={styles.removeImageButton}
+												onClick={() => {
+													if (editingQuestion) {
+														setEditingQuestion({ ...editingQuestion, audioData: undefined, audioUrl: undefined });
+													}
+												}}
+											>
+												<FiTrash2 /> <Trans id="common.remove">Entfernen</Trans>
+											</button>
+										</div>
 									) : (
-										<FormGroup>
-											<HotspotWarning>⚠️ Bitte lade zuerst ein Bild hoch, um die korrekte Position zu markieren.</HotspotWarning>
-										</FormGroup>
-									)}
-									<FormGroup>
-										<label>Optionen</label>
-										<CheckboxRow>
-											<input type="checkbox" checked={editingQuestion.hotspotAllowZoom ?? true} onChange={(e) => updateQuestionField('hotspotAllowZoom', e.target.checked)} id="allowZoom" />
-											<label htmlFor="allowZoom">Zoom erlauben (Spieler können das Bild vergrößern)</label>
-										</CheckboxRow>
-									</FormGroup>
-								</>
-							)}
-
-							{editingQuestion.type === 'sorting' && (
-								<FormGroup>
-									<label>Elemente (in korrekter Reihenfolge)</label>
-									<SortingItemsContainer>
-										{(editingQuestion.sortingItems || []).map((item, index) => (
-											<SortingItemRow key={index}>
-												<SortingItemNumber>{index + 1}.</SortingItemNumber>
-												<Input
-													value={item}
-													onChange={(e) => {
-														const newItems = [...(editingQuestion.sortingItems || [])];
-														newItems[index] = e.target.value;
-														updateQuestionField('sortingItems', newItems);
-													}}
-													placeholder={`Element ${index + 1}`}
-													fullWidth
-												/>
-												<IconButton
-													onClick={() => {
-														const newItems = (editingQuestion.sortingItems || []).filter((_, i) => i !== index);
-														updateQuestionField('sortingItems', newItems.length > 0 ? newItems : ['Element 1']);
-													}}
-													title="Entfernen"
-													danger
-													disabled={(editingQuestion.sortingItems || []).length <= 2}
-												>
-													<FiTrash2 />
-												</IconButton>
-											</SortingItemRow>
-										))}
-										<Button
-											variant="outline"
-											size="sm"
-											leftIcon={<FiPlus />}
-											onClick={() => {
-												const newItems = [...(editingQuestion.sortingItems || []), `Element ${(editingQuestion.sortingItems || []).length + 1}`];
-												updateQuestionField('sortingItems', newItems);
-											}}
-										>
-											Element hinzufügen
-										</Button>
-									</SortingItemsContainer>
-									<SortingHint>Die Elemente werden den Spielern in zufälliger Reihenfolge angezeigt. Sie müssen sie in die hier definierte korrekte Reihenfolge bringen.</SortingHint>
-								</FormGroup>
-							)}
-
-							{/* Matching Question Editor */}
-							{editingQuestion.type === 'matching' && (
-								<FormGroup>
-									<label>Paare (linke Seite → rechte Seite)</label>
-									<SortingItemsContainer>
-										{(editingQuestion.matchingPairs || []).map((pair, index) => (
-											<MatchingPairRow key={pair.id || index}>
-												<Input
-													value={pair.left}
-													onChange={(e) => {
-														const newPairs = [...(editingQuestion.matchingPairs || [])];
-														newPairs[index] = { ...newPairs[index], left: e.target.value };
-														updateQuestionField('matchingPairs', newPairs);
-													}}
-													placeholder="Begriff"
-													fullWidth
-												/>
-												<MatchingArrow>→</MatchingArrow>
-												<Input
-													value={pair.right}
-													onChange={(e) => {
-														const newPairs = [...(editingQuestion.matchingPairs || [])];
-														newPairs[index] = { ...newPairs[index], right: e.target.value };
-														updateQuestionField('matchingPairs', newPairs);
-													}}
-													placeholder="Zuordnung"
-													fullWidth
-												/>
-												<IconButton
-													onClick={() => {
-														const newPairs = (editingQuestion.matchingPairs || []).filter((_, i) => i !== index);
-														updateQuestionField('matchingPairs', newPairs);
-													}}
-													title="Entfernen"
-													danger
-													disabled={(editingQuestion.matchingPairs || []).length <= 2}
-												>
-													<FiTrash2 />
-												</IconButton>
-											</MatchingPairRow>
-										))}
-										<Button
-											variant="outline"
-											size="sm"
-											leftIcon={<FiPlus />}
-											onClick={() => {
-												const newPairs = [...(editingQuestion.matchingPairs || []), { id: Date.now().toString(), left: '', right: '' }];
-												updateQuestionField('matchingPairs', newPairs);
-											}}
-										>
-											Paar hinzufügen
-										</Button>
-									</SortingItemsContainer>
-								</FormGroup>
-							)}
-
-							{/* Audio Question Editor */}
-							{editingQuestion.type === 'audio' && (
-								<>
-									<FormGroup>
-										<label>Audio-Datei</label>
-										<AudioUploadContainer>
-											{editingQuestion.audioData || editingQuestion.audioUrl ? (
-												<AudioPreviewContainer>
-													<audio controls src={editingQuestion.audioData || editingQuestion.audioUrl} style={{ width: '100%' }} />
-													<RemoveImageButton
-														onClick={() => {
-															updateQuestionField('audioData', undefined);
-															updateQuestionField('audioUrl', undefined);
-														}}
-													>
-														<FiTrash2 />
-													</RemoveImageButton>
-												</AudioPreviewContainer>
-											) : (
-												<UploadButton onClick={() => document.getElementById('audio-upload')?.click()}>🎵 Audio hochladen</UploadButton>
-											)}
-											<input
-												id="audio-upload"
-												type="file"
-												accept="audio/*"
-												style={{ display: 'none' }}
-												onChange={(e) => {
-													const file = e.target.files?.[0];
-													if (file) {
+										<>
+											<div
+												className={styles.audioDropZone}
+												onDragOver={(e) => {
+													e.preventDefault();
+													e.stopPropagation();
+												}}
+												onDrop={(e) => {
+													e.preventDefault();
+													e.stopPropagation();
+													const file = e.dataTransfer.files[0];
+													if (file && file.type.startsWith('audio/')) {
 														const reader = new FileReader();
-														reader.onload = (event) => {
-															updateQuestionField('audioData', event.target?.result as string);
+														reader.onload = (ev) => {
+															updateQuestionField('audioData', ev.target?.result as string);
 														};
 														reader.readAsDataURL(file);
 													}
 												}}
-											/>
-										</AudioUploadContainer>
-									</FormGroup>
-									<FormRow>
-										<FormGroup>
-											<Input label="Maximale Wiedergaben" type="number" value={editingQuestion.audioMaxPlays || 3} onChange={(e) => updateQuestionField('audioMaxPlays', parseInt(e.target.value))} min={1} />
-										</FormGroup>
-										<FormGroup>
-											<label>Antwortmodus</label>
-											<select value={editingQuestion.audioAnswerMode || 'text'} onChange={(e) => updateQuestionField('audioAnswerMode', e.target.value)}>
-												<option value="text">Texteingabe</option>
-												<option value="multiple-choice">Multiple Choice</option>
-											</select>
-										</FormGroup>
-									</FormRow>
-									<FormGroup>
-										<Input label="Transkript (optional)" value={editingQuestion.audioTranscript || ''} onChange={(e) => updateQuestionField('audioTranscript', e.target.value)} placeholder="Optionales Transkript für Barrierefreiheit..." fullWidth />
-									</FormGroup>
-								</>
-							)}
-
-							{/* Image Choice Question Editor */}
-							{editingQuestion.type === 'image-choice' && (
-								<FormGroup>
-									<label>Bildoptionen</label>
-									<ImageOptionsGrid>
-										{(editingQuestion.imageOptions || []).map((option, index) => (
-											<ImageOptionCard key={option.id || index}>
-												{option.imageData || option.imageUrl ? (
-													<ImageOptionPreview>
-														<img src={option.imageData || option.imageUrl} alt={option.alt} />
-														<ImageOptionOverlay>
-															<IconButton
-																onClick={() => {
-																	const newOptions = (editingQuestion.imageOptions || []).filter((_, i) => i !== index);
-																	updateQuestionField('imageOptions', newOptions);
-																}}
-																danger
-															>
-																<FiTrash2 />
-															</IconButton>
-														</ImageOptionOverlay>
-													</ImageOptionPreview>
-												) : (
-													<ImageOptionUpload onClick={() => document.getElementById(`img-option-${index}`)?.click()}>
-														<FiImage size={24} />
-														<span>Bild {String.fromCharCode(65 + index)}</span>
-													</ImageOptionUpload>
-												)}
-												<input
-													id={`img-option-${index}`}
-													type="file"
-													accept="image/*"
-													style={{ display: 'none' }}
-													onChange={(e) => {
-														const file = e.target.files?.[0];
-														if (file) {
-															const reader = new FileReader();
-															reader.onload = (event) => {
-																const newOptions = [...(editingQuestion.imageOptions || [])];
-																newOptions[index] = { ...newOptions[index], imageData: event.target?.result as string };
-																updateQuestionField('imageOptions', newOptions);
-															};
-															reader.readAsDataURL(file);
-														}
-													}}
-												/>
-												<ImageOptionInputs>
-													<Input
-														value={option.alt}
+											>
+												🎵
+												<span>
+													<Trans id="quizEditor.dragAudioHere">Audio hierher ziehen oder</Trans>
+												</span>
+												<label className={styles.audioUploadLabel}>
+													<input
+														type="file"
+														accept="audio/*"
+														style={{ display: 'none' }}
 														onChange={(e) => {
-															const newOptions = [...(editingQuestion.imageOptions || [])];
-															newOptions[index] = { ...newOptions[index], alt: e.target.value };
-															updateQuestionField('imageOptions', newOptions);
+															const file = e.target.files?.[0];
+															if (file) {
+																const reader = new FileReader();
+																reader.onload = (ev) => {
+																	updateQuestionField('audioData', ev.target?.result as string);
+																};
+																reader.readAsDataURL(file);
+															}
 														}}
-														placeholder="Beschreibung"
-														fullWidth
 													/>
-													<label style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '14px' }}>
-														<input
-															type="checkbox"
-															checked={option.correct}
-															onChange={(e) => {
-																const newOptions = [...(editingQuestion.imageOptions || [])];
-																newOptions[index] = { ...newOptions[index], correct: e.target.checked };
-																updateQuestionField('imageOptions', newOptions);
-															}}
-														/>
-														Korrekt
-													</label>
-												</ImageOptionInputs>
-											</ImageOptionCard>
-										))}
-										<AddImageOptionButton
-											onClick={() => {
-												const newOptions = [...(editingQuestion.imageOptions || []), { id: Date.now().toString(), imageUrl: '', alt: '', correct: false }];
-												updateQuestionField('imageOptions', newOptions);
-											}}
-										>
-											<FiPlus size={24} />
-											<span>Option hinzufügen</span>
-										</AddImageOptionButton>
-									</ImageOptionsGrid>
-									<label style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '16px' }}>
-										<input type="checkbox" checked={editingQuestion.imageChoiceMultiSelect || false} onChange={(e) => updateQuestionField('imageChoiceMultiSelect', e.target.checked)} />
-										Mehrfachauswahl erlauben
-									</label>
-								</FormGroup>
-							)}
-
-							{/* Geolocation Question Editor */}
-							{editingQuestion.type === 'geolocation' && (
-								<>
-									<FormRow>
-										<FormGroup>
-											<label>Modus</label>
-											<select value={editingQuestion.geoMode || 'image'} onChange={(e) => updateQuestionField('geoMode', e.target.value)}>
-												<option value="image">Bildmarkierung</option>
-												<option value="map">Karte (in Entwicklung)</option>
-											</select>
-										</FormGroup>
-										<FormGroup>
-											<Input label="Toleranz (%)" type="number" value={editingQuestion.geoTolerance || 5} onChange={(e) => updateQuestionField('geoTolerance', parseFloat(e.target.value))} min={1} max={50} />
-										</FormGroup>
-									</FormRow>
-									{editingQuestion.geoMode !== 'map' && (
-										<FormGroup>
-											<label>Hintergrundbild</label>
-											<ImageUploadContainer>
-												{editingQuestion.imageData || editingQuestion.imageUrl ? (
-													<GeoImagePreview>
-														<img src={editingQuestion.imageData || editingQuestion.imageUrl} alt="Hintergrundbild" />
-														{editingQuestion.geoCorrectX !== undefined && editingQuestion.geoCorrectY !== undefined && <GeoMarker style={{ left: `${editingQuestion.geoCorrectX}%`, top: `${editingQuestion.geoCorrectY}%` }}>📍</GeoMarker>}
-														<GeoClickOverlay
-															onClick={(e) => {
-																const rect = e.currentTarget.getBoundingClientRect();
-																const x = ((e.clientX - rect.left) / rect.width) * 100;
-																const y = ((e.clientY - rect.top) / rect.height) * 100;
-																updateQuestionField('geoCorrectX', x);
-																updateQuestionField('geoCorrectY', y);
-															}}
-														/>
-													</GeoImagePreview>
-												) : (
-													<ImageDropZone onClick={() => document.getElementById('geo-image-upload')?.click()}>
-														<FiImage size={32} />
-														<p>Klicke zum Hochladen eines Bildes</p>
-													</ImageDropZone>
-												)}
-												<input
-													id="geo-image-upload"
-													type="file"
-													accept="image/*"
-													style={{ display: 'none' }}
-													onChange={(e) => {
-														const file = e.target.files?.[0];
-														if (file) {
-															const reader = new FileReader();
-															reader.onload = (event) => {
-																updateQuestionField('imageData', event.target?.result as string);
-															};
-															reader.readAsDataURL(file);
-														}
-													}}
-												/>
-											</ImageUploadContainer>
-											<SortingHint>Klicke auf das Bild, um die korrekte Position zu markieren.</SortingHint>
-										</FormGroup>
+													<Trans id="quizEditor.selectFile">Datei auswählen</Trans>
+												</label>
+											</div>
+											<div style={{ textAlign: 'center', margin: '8px 0' }}>
+												<Trans id="common.or">oder</Trans>
+											</div>
+											<Input label="" value={editingQuestion.audioUrl || ''} onChange={(e) => updateQuestionField('audioUrl', e.target.value)} placeholder="Audio-URL eingeben..." fullWidth />
+										</>
 									)}
-								</>
-							)}
+								</div>
+							</div>
 
-							<FormGroup>
+							{/* Type-specific Question Editor */}
+							{createQuestionEditor(editingQuestion, updateQuestionField)}
+
+							<div className={styles.formGroup}>
 								<Input label="Punkte" type="number" value={editingQuestion.points} onChange={(e) => updateQuestionField('points', parseInt(e.target.value))} />
-							</FormGroup>
+							</div>
 
-							<FormGroup>
+							<div className={styles.formGroup}>
 								<Input label="Hinweis (optional)" value={editingQuestion.hint || ''} onChange={(e) => updateQuestionField('hint', e.target.value)} placeholder="Optionaler Hinweis für den Moderator..." fullWidth />
-							</FormGroup>
+							</div>
 
-							<ButtonRow>
+							<div className={styles.buttonRow}>
 								<Button variant="outline" onClick={() => setShowQuestionModal(false)}>
 									{' '}
 									<Trans id="common.cancel">Abbrechen</Trans>
@@ -1580,1099 +946,40 @@ export const QuizEditorPage: React.FC = () => {
 								<Button variant="primary" onClick={saveQuestion}>
 									<Trans id="common.save">Speichern</Trans>
 								</Button>
-							</ButtonRow>
-						</EditorForm>
+							</div>
+						</div>
 					)}
 				</Modal>
 
 				{/* Load Quiz Modal */}
 				<Modal isOpen={showLoadModal} onClose={() => setShowLoadModal(false)} title="Quiz laden">
 					{loadingQuizList ? (
-						<LoadingContainer>
+						<div className={styles.loadingContainer}>
 							<Trans id="quizEditor.loadingQuizzes">Lade Quizze...</Trans>
-						</LoadingContainer>
+						</div>
 					) : availableQuizzes.length === 0 ? (
-						<EmptyListMessage>
+						<div className={styles.emptyListMessage}>
 							<Trans id="quizEditor.noSavedQuizzes">Keine gespeicherten Quizze gefunden.</Trans>
-						</EmptyListMessage>
+						</div>
 					) : (
-						<QuizList>
+						<div className={styles.quizList}>
 							{availableQuizzes.map((quiz) => (
-								<QuizListItem key={quiz.id} onClick={() => loadQuizFromBackend(quiz.id)}>
-									<QuizListItemTitle>{quiz.title}</QuizListItemTitle>
-									<QuizListItemMeta>
+								<div className={styles.quizListItem} key={quiz.id} onClick={() => loadQuizFromBackend(quiz.id)}>
+									<h4 className={styles.quizListItemTitle}>{quiz.title}</h4>
+									<span className={styles.quizListItemMeta}>
 										{quiz.question_count} <Trans id="common.questionsCount">Fragen</Trans> • {new Date(quiz.updated_at).toLocaleDateString('de-DE')}
-									</QuizListItemMeta>
-								</QuizListItem>
+									</span>
+								</div>
 							))}
-						</QuizList>
+						</div>
 					)}
-					<ModalActions>
+					<div className={styles.modalActions}>
 						<Button variant="outline" onClick={() => setShowLoadModal(false)}>
 							<Trans id="common.close">Schließen</Trans>
 						</Button>
-					</ModalActions>
+					</div>
 				</Modal>
 			</Layout>
 		</div>
 	);
 };
-
-// Styled Components
-const Container = styled.div`
-	max-width: 1200px;
-	margin: 0 auto;
-	padding: ${spacing.xl};
-	display: flex;
-	flex-direction: column;
-	gap: ${spacing.xl};
-	height: 100%;
-	min-height: 0; /* Allow flex child to shrink */
-`;
-
-const HeaderContent = styled.div`
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	flex-wrap: wrap;
-	gap: ${spacing.md};
-`;
-
-const Title = styled.h1`
-	margin: 0;
-	font-size: var(--font-size-2xl);
-	font-weight: var(--font-weight-semibold);
-	color: var(--color-text-primary);
-`;
-
-const HeaderLeft = styled.div`
-	display: flex;
-	gap: ${spacing.md};
-	align-items: center;
-`;
-
-const HeaderActions = styled.div`
-	display: flex;
-	gap: ${spacing.sm};
-	align-items: center;
-`;
-
-const CatalogInfo = styled(Card)`
-	padding: ${spacing.lg};
-	display: flex;
-	flex-direction: column;
-	gap: ${spacing.md};
-`;
-
-const QuestionsList = styled.div`
-	display: flex;
-	flex-direction: column;
-	gap: ${spacing.md};
-	flex: 1;
-	min-height: 0; /* Allow scrolling */
-	/* Allow the questions area to scroll independently when the GameMode section is large */
-	overflow: auto;
-	max-height: calc(100vh - 360px); /* leave room for header and catalog info */
-`;
-
-const ListHeader = styled.div`
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-
-	h2 {
-		margin: 0;
-		font-size: var(--font-size-xl);
-		color: var(--color-text-primary);
-	}
-`;
-
-const QuestionsTable = styled.div`
-	display: flex;
-	flex-direction: column;
-	gap: 1px;
-	background: var(--color-border);
-	border-radius: var(--radius-md);
-	overflow-y: auto;
-	overflow-x: hidden;
-	max-height: calc(100vh - 340px); /* Leave space for header, quiz info, and footer */
-	min-height: 200px;
-	padding-bottom: 2px; /* Ensure last item is fully visible */
-
-	/* Custom scrollbar styling */
-	&::-webkit-scrollbar {
-		width: 8px;
-	}
-
-	&::-webkit-scrollbar-track {
-		background: var(--color-neutral-100);
-		border-radius: 4px;
-	}
-
-	&::-webkit-scrollbar-thumb {
-		background: var(--color-neutral-400);
-		border-radius: 4px;
-	}
-
-	&::-webkit-scrollbar-thumb:hover {
-		background: var(--color-neutral-500);
-	}
-
-	[data-theme='dark'] &::-webkit-scrollbar-track {
-		background: var(--color-neutral-800);
-	}
-
-	[data-theme='dark'] &::-webkit-scrollbar-thumb {
-		background: var(--color-neutral-600);
-	}
-`;
-
-const QuestionRow = styled.div`
-	display: grid;
-	grid-template-columns: 40px 50px 60px 1fr 80px 100px;
-	align-items: center;
-	gap: var(--spacing-md);
-	padding: var(--spacing-md) var(--spacing-lg);
-	background: var(--color-surface);
-	transition: all 0.2s;
-	cursor: grab;
-
-	&:active {
-		cursor: grabbing;
-	}
-
-	&:hover {
-		background: var(--color-surface-hover);
-		box-shadow: var(--shadow-xs);
-	}
-`;
-
-const DragHandle = styled.div`
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	color: var(--color-text-tertiary);
-	font-size: 18px;
-	cursor: grab;
-	transition: color 0.2s;
-
-	&:hover {
-		color: var(--color-text-secondary);
-	}
-
-	&:active {
-		cursor: grabbing;
-	}
-`;
-
-const QuestionNumber = styled.div`
-	font-weight: var(--font-weight-semibold);
-	color: var(--color-text-secondary);
-	font-size: var(--font-size-sm);
-	text-align: center;
-`;
-
-const QuestionTypeTag = styled.div<{ type: string }>`
-	font-size: var(--font-size-xs);
-	font-weight: var(--font-weight-semibold);
-	text-transform: uppercase;
-	padding: 4px 8px;
-	border-radius: var(--radius-sm);
-	text-align: center;
-	white-space: nowrap;
-	background: ${(props) => {
-		switch (props.type) {
-			case 'multiple-choice':
-				return 'var(--color-primary-100)';
-			case 'true-false':
-				return 'var(--color-primary-100)';
-			case 'text':
-				return 'var(--color-primary-100)';
-			case 'buzzer':
-				return 'var(--color-error-100)';
-			case 'slider':
-				return 'var(--color-success-100)';
-			case 'hotspot':
-				return 'var(--color-warning-100)';
-			case 'sorting':
-				return 'var(--color-secondary-100)';
-			case 'matching':
-				return 'var(--color-info-100, #e0f2fe)';
-			case 'audio':
-				return 'var(--color-purple-100, #f3e8ff)';
-			case 'image-choice':
-				return 'var(--color-pink-100, #fce7f3)';
-			case 'geolocation':
-				return 'var(--color-teal-100, #ccfbf1)';
-			default:
-				return 'var(--color-neutral-100)';
-		}
-	}};
-	color: ${(props) => {
-		switch (props.type) {
-			case 'multiple-choice':
-				return 'var(--color-primary-700)';
-			case 'true-false':
-				return 'var(--color-primary-700)';
-			case 'text':
-				return 'var(--color-primary-700)';
-			case 'buzzer':
-				return 'var(--color-error-700)';
-			case 'slider':
-				return 'var(--color-success-700)';
-			case 'hotspot':
-				return 'var(--color-warning-700)';
-			case 'sorting':
-				return 'var(--color-secondary-700)';
-			case 'matching':
-				return 'var(--color-info-700, #0369a1)';
-			case 'audio':
-				return 'var(--color-purple-700, #7c3aed)';
-			case 'image-choice':
-				return 'var(--color-pink-700, #be185d)';
-			case 'geolocation':
-				return 'var(--color-teal-700, #0f766e)';
-			default:
-				return 'var(--color-neutral-700)';
-		}
-	}};
-`;
-
-const QuestionTextCell = styled.div`
-	display: flex;
-	flex-direction: column;
-	gap: 4px;
-	min-width: 0;
-	cursor: pointer;
-
-	&:hover {
-		color: var(--color-primary-600);
-	}
-`;
-
-const QuestionTextMain = styled.div`
-	font-size: var(--font-size-sm);
-	font-weight: var(--font-weight-medium);
-	color: var(--color-text-primary);
-	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: ellipsis;
-`;
-
-const QuestionTextSub = styled.div`
-	font-size: var(--font-size-xs);
-	color: var(--color-primary-600);
-	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: ellipsis;
-`;
-
-const PointsCell = styled.div`
-	font-size: var(--font-size-sm);
-	font-weight: var(--font-weight-semibold);
-	color: var(--color-text-secondary);
-	text-align: right;
-
-	&::after {
-		content: ' Pkt';
-		font-weight: var(--font-weight-normal);
-		color: var(--color-text-tertiary);
-	}
-`;
-
-const ActionsCell = styled.div`
-	display: flex;
-	gap: ${spacing.xs};
-	justify-content: flex-end;
-`;
-
-const IconButton = styled.button<{ danger?: boolean }>`
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	width: 32px;
-	height: 32px;
-	border: none;
-	background: ${(props) => (props.danger ? 'var(--color-error-bg)' : 'var(--color-surface-hover)')};
-	color: ${(props) => (props.danger ? 'var(--color-error-500)' : 'var(--color-text-secondary)')};
-	border-radius: var(--radius-sm);
-	cursor: pointer;
-	transition: all 0.2s;
-	font-size: 16px;
-
-	&:hover {
-		background: ${(props) => (props.danger ? 'var(--color-error-100, #fee2e2)' : 'var(--color-border)')};
-		color: ${(props) => (props.danger ? 'var(--color-error-700)' : 'var(--color-text-primary)')};
-		transform: scale(1.05);
-	}
-
-	&:active {
-		transform: scale(0.95);
-	}
-`;
-
-const EmptyState = styled.div`
-	text-align: center;
-	padding: ${spacing['3xl']} ${spacing.xl};
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	gap: ${spacing.md};
-`;
-
-const EmptyIcon = styled.div`
-	font-size: 64px;
-	opacity: 0.5;
-`;
-
-const EmptyTitle = styled.h3`
-	margin: 0;
-	font-size: var(--font-size-xl);
-	color: var(--color-text-primary);
-`;
-
-const EmptyText = styled.p`
-	margin: 0;
-	color: var(--color-text-secondary);
-`;
-
-const EditorForm = styled.div`
-	display: flex;
-	flex-direction: column;
-	gap: ${spacing.lg};
-`;
-
-const FormRow = styled.div`
-	display: grid;
-	grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-	gap: ${spacing.md};
-`;
-
-const FormGroup = styled.div`
-	display: flex;
-	flex-direction: column;
-	gap: var(--spacing-sm);
-
-	label {
-		font-weight: var(--font-weight-medium);
-		color: var(--color-text-primary);
-		font-size: var(--font-size-sm);
-	}
-
-	select {
-		padding: 10px;
-		border: 1px solid var(--color-border);
-		border-radius: var(--radius-md);
-		font-size: var(--font-size-sm);
-		background: var(--color-surface);
-		color: var(--color-text-primary);
-
-		&:focus {
-			outline: none;
-			border-color: var(--color-primary-400);
-		}
-	}
-`;
-
-const AnswersSection = styled.div`
-	display: flex;
-	flex-direction: column;
-	gap: ${spacing.md};
-`;
-
-const AnswerRow = styled.div<{ isCorrect?: boolean }>`
-	display: flex;
-	gap: var(--spacing-sm);
-	align-items: center;
-	padding: var(--spacing-md);
-	border-radius: var(--radius-md);
-	background: ${(props) => (props.isCorrect ? 'var(--color-primary-bg)' : 'var(--color-surface-hover)')};
-	border: 2px solid ${(props) => (props.isCorrect ? 'var(--color-primary-border)' : 'var(--color-border)')};
-	transition: all 0.2s;
-
-	&:hover {
-		border-color: ${(props) => (props.isCorrect ? 'var(--color-primary-500)' : 'var(--color-primary-300)')};
-	}
-`;
-
-const CorrectRadio = styled.input`
-	width: 20px;
-	height: 20px;
-	cursor: pointer;
-	accent-color: var(--color-primary-500);
-`;
-
-const CorrectLabel = styled.span<{ isCorrect: boolean }>`
-	min-width: 100px;
-	font-size: var(--font-size-sm);
-	font-weight: ${(props) => (props.isCorrect ? 'var(--font-weight-semibold)' : 'var(--font-weight-normal)')};
-	color: ${(props) => (props.isCorrect ? 'var(--color-primary-700)' : 'var(--color-text-secondary)')};
-`;
-
-const TrueFalseOptions = styled.div`
-	display: flex;
-	gap: ${spacing.md};
-`;
-
-const TrueFalseOption = styled.div<{ selected: boolean }>`
-	flex: 1;
-	display: flex;
-	align-items: center;
-	gap: var(--spacing-sm);
-	padding: var(--spacing-md);
-	border: 2px solid ${(props) => (props.selected ? 'var(--color-primary-border)' : 'var(--color-border)')};
-	background: ${(props) => (props.selected ? 'var(--color-primary-bg)' : 'var(--color-surface)')};
-	border-radius: var(--radius-md);
-	cursor: pointer;
-	transition: all 0.2s;
-
-	&:hover {
-		border-color: ${(props) => (props.selected ? 'var(--color-primary-500)' : 'var(--color-primary-300)')};
-	}
-
-	input {
-		width: 20px;
-		height: 20px;
-		cursor: pointer;
-		accent-color: var(--color-primary-500);
-	}
-
-	span {
-		font-size: var(--font-size-sm);
-		font-weight: ${(props) => (props.selected ? 'var(--font-weight-semibold)' : 'var(--font-weight-normal)')};
-		color: ${(props) => (props.selected ? 'var(--color-primary-700)' : 'var(--color-text-primary)')};
-	}
-`;
-
-const ButtonRow = styled.div`
-	display: flex;
-	justify-content: flex-end;
-	gap: ${spacing.md};
-	margin-top: ${spacing.lg};
-`;
-
-// Image Upload Components
-const ImageUploadContainer = styled.div`
-	display: flex;
-	flex-direction: column;
-	gap: ${spacing.sm};
-`;
-
-const ImageDropZone = styled.div`
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	justify-content: center;
-	gap: var(--spacing-sm);
-	padding: var(--spacing-xl);
-	border: 2px dashed var(--color-border);
-	border-radius: var(--radius-md);
-	background: var(--color-surface-hover);
-	color: var(--color-text-secondary);
-	cursor: pointer;
-	transition: all 0.2s;
-
-	&:hover {
-		border-color: var(--color-primary-400);
-		background: var(--color-primary-bg);
-	}
-`;
-
-const ImageUploadLabel = styled.label`
-	padding: var(--spacing-sm) var(--spacing-md);
-	background: var(--color-primary-500);
-	color: var(--color-text-inverse);
-	border-radius: var(--radius-md);
-	cursor: pointer;
-	font-size: var(--font-size-sm);
-	font-weight: var(--font-weight-medium);
-	transition: background 0.2s;
-
-	&:hover {
-		background: var(--color-primary-600);
-	}
-`;
-
-const ImagePreviewContainer = styled.div`
-	position: relative;
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	gap: ${spacing.sm};
-`;
-
-const ImagePreview = styled.img`
-	max-width: 100%;
-	max-height: 200px;
-	border-radius: var(--radius-md);
-	object-fit: contain;
-	border: 1px solid var(--color-border);
-`;
-
-const RemoveImageButton = styled.button`
-	display: flex;
-	align-items: center;
-	gap: var(--spacing-xs);
-	padding: var(--spacing-sm) var(--spacing-md);
-	background: var(--color-error-bg);
-	color: var(--color-error-700);
-	border: 1px solid var(--color-error-border);
-	border-radius: var(--radius-sm);
-	cursor: pointer;
-	font-size: var(--font-size-sm);
-	transition: all 0.2s;
-
-	&:hover {
-		background: var(--color-error-100, #fecaca);
-	}
-`;
-
-// Load Modal Styled Components
-const LoadingContainer = styled.div`
-	padding: var(--spacing-xl);
-	text-align: center;
-	color: var(--color-text-secondary);
-`;
-
-const EmptyListMessage = styled.div`
-	padding: var(--spacing-xl);
-	text-align: center;
-	color: var(--color-text-secondary);
-	font-style: italic;
-`;
-
-const QuizList = styled.div`
-	display: flex;
-	flex-direction: column;
-	gap: var(--spacing-sm);
-	max-height: 400px;
-	overflow-y: auto;
-`;
-
-const QuizListItem = styled.div`
-	padding: var(--spacing-md);
-	background: var(--color-surface);
-	border: 1px solid var(--color-border);
-	border-radius: var(--radius-md);
-	cursor: pointer;
-	transition: all 0.2s;
-
-	&:hover {
-		background: var(--color-primary-bg);
-		border-color: var(--color-primary-border);
-	}
-`;
-
-const QuizListItemTitle = styled.h4`
-	margin: 0 0 var(--spacing-xs) 0;
-	font-size: var(--font-size-md);
-	font-weight: var(--font-weight-semibold);
-	color: var(--color-text-primary);
-`;
-
-const QuizListItemMeta = styled.span`
-	font-size: var(--font-size-sm);
-	color: var(--color-text-secondary);
-`;
-
-const ModalActions = styled.div`
-	display: flex;
-	justify-content: flex-end;
-	margin-top: var(--spacing-lg);
-	padding-top: var(--spacing-md);
-	border-top: 1px solid var(--color-border);
-`;
-
-// Slider Editor Styles
-const SliderPreview = styled.div`
-	margin-top: var(--spacing-sm);
-	padding: var(--spacing-md);
-	background: var(--color-surface-hover);
-	border-radius: var(--radius-md);
-	display: flex;
-	align-items: center;
-	gap: var(--spacing-md);
-`;
-
-const SliderPreviewLabel = styled.span`
-	font-size: var(--font-size-sm);
-	color: var(--color-text-secondary);
-`;
-
-const SliderPreviewValue = styled.span`
-	font-size: var(--font-size-lg);
-	font-weight: var(--font-weight-semibold);
-	color: var(--color-success-600);
-`;
-
-const SliderPreviewRange = styled.span`
-	font-size: var(--font-size-xs);
-	color: var(--color-text-disabled);
-`;
-
-// Hotspot Editor Styles
-const HotspotEditorContainer = styled.div`
-	width: 100%;
-	max-height: 400px;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	border-radius: var(--radius-md);
-	border: 2px solid var(--color-border);
-	background: var(--color-surface-hover);
-	overflow: hidden;
-`;
-
-const HotspotImageWrapper = styled.div`
-	position: relative;
-	display: inline-block;
-	cursor: crosshair;
-`;
-
-const HotspotEditorImage = styled.img`
-	max-width: 100%;
-	max-height: 396px;
-	object-fit: contain;
-	display: block;
-`;
-
-const HotspotMarker = styled.div`
-	position: absolute;
-	width: 24px;
-	height: 24px;
-	background: var(--color-error-500);
-	border: 3px solid white;
-	border-radius: 50%;
-	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-	transform: translate(-50%, -50%);
-	pointer-events: none;
-
-	&::after {
-		content: '';
-		position: absolute;
-		top: 50%;
-		left: 50%;
-		width: 8px;
-		height: 8px;
-		background: white;
-		border-radius: 50%;
-		transform: translate(-50%, -50%);
-	}
-`;
-
-const HotspotCoords = styled.div`
-	margin-top: var(--spacing-sm);
-	font-size: var(--font-size-sm);
-	color: var(--color-text-secondary);
-	text-align: center;
-`;
-
-const HotspotWarning = styled.div`
-	padding: var(--spacing-lg);
-	background: var(--color-warning-bg);
-	border: 1px solid var(--color-warning-border);
-	border-radius: var(--radius-md);
-	color: var(--color-warning-700);
-	text-align: center;
-`;
-
-const CheckboxRow = styled.div`
-	display: flex;
-	align-items: center;
-	gap: var(--spacing-sm);
-
-	input[type='checkbox'] {
-		width: 18px;
-		height: 18px;
-		cursor: pointer;
-	}
-
-	label {
-		font-size: var(--font-size-sm);
-		color: var(--color-text-primary);
-		cursor: pointer;
-	}
-`;
-
-// Sorting Editor Styles
-const SortingItemsContainer = styled.div`
-	display: flex;
-	flex-direction: column;
-	gap: var(--spacing-sm);
-	margin-top: var(--spacing-sm);
-`;
-
-const SortingItemRow = styled.div`
-	display: flex;
-	align-items: center;
-	gap: var(--spacing-sm);
-`;
-
-const SortingItemNumber = styled.span`
-	width: 24px;
-	font-size: var(--font-size-sm);
-	font-weight: var(--font-weight-semibold);
-	color: var(--color-text-secondary);
-	text-align: right;
-`;
-
-const SortingHint = styled.p`
-	margin-top: var(--spacing-md);
-	font-size: var(--font-size-sm);
-	color: var(--color-text-secondary);
-	font-style: italic;
-`;
-
-// Matching question styled components
-const MatchingPairRow = styled.div`
-	display: flex;
-	align-items: center;
-	gap: var(--spacing-sm);
-	margin-bottom: var(--spacing-sm);
-`;
-
-const MatchingArrow = styled.span`
-	font-size: 1.25rem;
-	color: var(--color-primary);
-	flex-shrink: 0;
-`;
-
-// Audio question styled components
-const AudioUploadContainer = styled.div`
-	display: flex;
-	flex-direction: column;
-	gap: var(--spacing-md);
-`;
-
-const AudioPreviewContainer = styled.div`
-	display: flex;
-	flex-direction: column;
-	gap: var(--spacing-sm);
-	padding: var(--spacing-md);
-	background: var(--color-surface);
-	border: 1px solid var(--color-border);
-	border-radius: var(--radius-md);
-`;
-
-const UploadButton = styled.button`
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	gap: var(--spacing-sm);
-	padding: var(--spacing-lg);
-	background: var(--color-surface);
-	border: 2px dashed var(--color-border);
-	border-radius: var(--radius-md);
-	cursor: pointer;
-	font-size: var(--font-size-md);
-	color: var(--color-text-secondary);
-	transition: all 0.2s ease;
-
-	&:hover {
-		border-color: var(--color-primary);
-		color: var(--color-primary);
-	}
-`;
-
-// Image choice styled components
-const ImageOptionsGrid = styled.div`
-	display: grid;
-	grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-	gap: var(--spacing-md);
-`;
-
-const ImageOptionCard = styled.div`
-	display: flex;
-	flex-direction: column;
-	gap: var(--spacing-xs);
-	background: var(--color-surface);
-	border: 1px solid var(--color-border);
-	border-radius: var(--radius-md);
-	padding: var(--spacing-sm);
-`;
-
-const ImageOptionPreview = styled.div`
-	position: relative;
-	aspect-ratio: 1;
-	border-radius: var(--radius-sm);
-	overflow: hidden;
-
-	img {
-		width: 100%;
-		height: 100%;
-		object-fit: cover;
-	}
-`;
-
-const ImageOptionOverlay = styled.div`
-	position: absolute;
-	inset: 0;
-	background: rgba(0, 0, 0, 0.5);
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	opacity: 0;
-	transition: opacity 0.2s ease;
-
-	${ImageOptionPreview}:hover & {
-		opacity: 1;
-	}
-`;
-
-const ImageOptionUpload = styled.button`
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	justify-content: center;
-	gap: var(--spacing-xs);
-	aspect-ratio: 1;
-	background: var(--color-neutral-100);
-	border: 2px dashed var(--color-border);
-	border-radius: var(--radius-sm);
-	cursor: pointer;
-	color: var(--color-text-secondary);
-	transition: all 0.2s ease;
-
-	&:hover {
-		border-color: var(--color-primary);
-		color: var(--color-primary);
-	}
-`;
-
-const ImageOptionInputs = styled.div`
-	display: flex;
-	flex-direction: column;
-	gap: var(--spacing-xs);
-`;
-
-const AddImageOptionButton = styled.button`
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	justify-content: center;
-	gap: var(--spacing-sm);
-	min-height: 150px;
-	background: var(--color-surface);
-	border: 2px dashed var(--color-border);
-	border-radius: var(--radius-md);
-	cursor: pointer;
-	color: var(--color-text-secondary);
-	transition: all 0.2s ease;
-
-	&:hover {
-		border-color: var(--color-primary);
-		color: var(--color-primary);
-	}
-`;
-
-// Geolocation styled components
-const GeoImagePreview = styled.div`
-	position: relative;
-	width: 100%;
-	max-height: 400px;
-	border-radius: var(--radius-md);
-	overflow: hidden;
-
-	img {
-		width: 100%;
-		height: 100%;
-		object-fit: contain;
-	}
-`;
-
-const GeoMarker = styled.div`
-	position: absolute;
-	transform: translate(-50%, -100%);
-	font-size: 2rem;
-	pointer-events: none;
-	z-index: 10;
-	filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
-`;
-
-const GeoClickOverlay = styled.div`
-	position: absolute;
-	inset: 0;
-	cursor: crosshair;
-`;
-
-// Game Mode and Team Configuration styled components
-const GameModeSection = styled.div`
-	display: flex;
-	flex-direction: column;
-	gap: var(--spacing-md);
-	padding: var(--spacing-lg);
-	background: var(--color-surface);
-	border-radius: var(--radius-lg);
-	border: 1px solid var(--color-border);
-`;
-
-const GameModeHeader = styled.div`
-	display: flex;
-	align-items: center;
-	gap: var(--spacing-sm);
-	font-weight: 600;
-	color: var(--color-text-primary);
-
-	svg {
-		color: var(--color-primary);
-	}
-`;
-
-const GameModeSelector = styled.div`
-	display: flex;
-	gap: var(--spacing-md);
-`;
-
-const GameModeOption = styled.button<{ $active: boolean }>`
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	gap: var(--spacing-xs);
-	flex: 1;
-	padding: var(--spacing-md);
-	background: ${({ $active }) => ($active ? 'var(--color-primary-100, rgba(14, 165, 233, 0.15))' : 'var(--color-surface)')};
-	border: 2px solid ${({ $active }) => ($active ? 'var(--color-primary)' : 'var(--color-border)')};
-	border-radius: var(--radius-lg);
-	cursor: pointer;
-	transition: all 0.2s ease;
-	color: var(--color-text-primary);
-
-	svg {
-		color: ${({ $active }) => ($active ? 'var(--color-primary)' : 'var(--color-text-secondary)')};
-	}
-
-	&:hover {
-		border-color: var(--color-primary);
-		background: ${({ $active }) => ($active ? 'var(--color-primary-100, rgba(14, 165, 233, 0.15))' : 'var(--color-surface-hover)')};
-
-		svg {
-			color: var(--color-primary);
-		}
-	}
-`;
-
-const GameModeLabel = styled.span`
-	font-weight: 600;
-	color: inherit;
-`;
-
-const GameModeDescription = styled.span`
-	font-size: var(--font-size-sm);
-	color: var(--color-text-secondary);
-	text-align: center;
-`;
-
-const TeamConfigSection = styled.div`
-	display: flex;
-	flex-direction: column;
-	gap: var(--spacing-md);
-	padding-top: var(--spacing-md);
-	border-top: 1px solid var(--color-border);
-	border-radius: var(--radius-md);
-`;
-
-const TeamListContainer = styled.div`
-	display: flex;
-	flex-direction: column;
-	gap: var(--spacing-sm);
-`;
-
-const TeamRow = styled.div`
-	display: flex;
-	align-items: center;
-	gap: var(--spacing-sm);
-	padding: var(--spacing-md);
-	background: var(--color-surface);
-	border-radius: var(--radius-md);
-	border: 1px solid var(--color-border);
-	transition: all 0.2s ease;
-
-	&:hover {
-		border-color: var(--color-primary-300);
-	}
-`;
-
-const TeamColorPicker = styled.input`
-	width: 44px;
-	height: 44px;
-	padding: 0;
-	border: none;
-	border-radius: var(--radius-md);
-	cursor: pointer;
-
-	&::-webkit-color-swatch-wrapper {
-		padding: 0;
-	}
-
-	&::-webkit-color-swatch {
-		border: 2px solid var(--color-border);
-		border-radius: var(--radius-md);
-	}
-`;
-
-const TeamNameInput = styled.input`
-	flex: 1;
-	padding: var(--spacing-sm) var(--spacing-md);
-	border: 1px solid var(--color-border);
-	border-radius: var(--radius-md);
-	background: var(--color-input-bg, var(--color-surface));
-	color: var(--color-text-primary);
-	font-size: var(--font-size-md);
-	transition: all 0.2s ease;
-
-	&:focus {
-		outline: none;
-		border-color: var(--color-primary);
-		box-shadow: 0 0 0 2px var(--color-focus-ring);
-	}
-
-	&::placeholder {
-		color: var(--color-text-tertiary);
-	}
-`;
-
-const TeamDeleteButton = styled.button`
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	width: 40px;
-	height: 40px;
-	background: transparent;
-	border: 1px solid var(--color-border);
-	border-radius: var(--radius-md);
-	cursor: pointer;
-	color: var(--color-text-secondary);
-	transition: all 0.2s ease;
-
-	&:hover {
-		background: var(--color-error-bg, rgba(239, 68, 68, 0.1));
-		border-color: var(--color-error-500);
-		color: var(--color-error-500);
-	}
-
-	&:disabled {
-		opacity: 0.4;
-		cursor: not-allowed;
-	}
-`;
-
-const AddTeamButton = styled.button`
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	gap: var(--spacing-sm);
-	padding: var(--spacing-md);
-	background: transparent;
-	border: 2px dashed var(--color-border);
-	border-radius: var(--radius-md);
-	cursor: pointer;
-	color: var(--color-text-secondary);
-	font-size: var(--font-size-md);
-	transition: all 0.2s ease;
-
-	&:hover {
-		border-color: var(--color-primary);
-		color: var(--color-primary);
-		background: var(--color-primary-bg, rgba(14, 165, 233, 0.05));
-	}
-`;

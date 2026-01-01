@@ -7,7 +7,7 @@
  *
  * @module pages/PlayerSessionPage
  */
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Trans } from '@lingui/react/macro';
 import { Button } from '../atoms';
@@ -15,6 +15,7 @@ import { PlayerHeader, PlayerQuestionDisplay, PlayerSidebar, AnswerArea } from '
 import { TeamSelection, TeamLeaderboard } from '../molecules';
 import { usePlayerSession } from '../../hooks/usePlayerSession';
 import { useTeam } from '../../hooks/useTeam';
+import { useMediaPreloader } from '../../hooks/useMediaPreloader';
 import styles from './PlayerSessionPage.module.css';
 
 export const PlayerSessionPage: React.FC = () => {
@@ -40,6 +41,7 @@ export const PlayerSessionPage: React.FC = () => {
 		isInputLocked,
 		buzzerWinner,
 		isTeamMode,
+		socket,
 		// Actions
 		handleAnswerChange,
 		handleSubmitAnswer,
@@ -68,6 +70,12 @@ export const PlayerSessionPage: React.FC = () => {
 	const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null);
 	const [joiningTeam, setJoiningTeam] = useState(false);
 
+	// Audio player reference for synchronized playback
+	const audioRef = useRef<HTMLAudioElement | null>(null);
+
+	// Preload all media files in background
+	const preloadProgress = useMediaPreloader(gameState?.questions || [], !!gameState && !loading);
+
 	// Handle team join confirmation
 	const handleConfirmTeam = useCallback(async () => {
 		if (!selectedTeamId) return;
@@ -78,6 +86,46 @@ export const PlayerSessionPage: React.FC = () => {
 			// Error is handled by useTeam hook
 		}
 	}, [selectedTeamId, joinTeam]);
+
+	// Listen for audio control events from moderator
+	useEffect(() => {
+		if (!socket) return;
+
+		const handleAudioControl = (data: { action: string; audio_src: string; current_time: number }) => {
+			const { action, audio_src, current_time } = data;
+
+			// Create or reuse audio element
+			if (!audioRef.current || audioRef.current.src !== audio_src) {
+				if (audioRef.current) {
+					audioRef.current.pause();
+				}
+				audioRef.current = new Audio(audio_src);
+			}
+
+			const audio = audioRef.current;
+
+			// Handle action
+			if (action === 'play') {
+				audio.currentTime = current_time;
+				audio.play().catch((err) => console.error('Audio play failed:', err));
+			} else if (action === 'pause') {
+				audio.pause();
+			} else if (action === 'stop') {
+				audio.pause();
+				audio.currentTime = 0;
+			}
+		};
+
+		socket.on('audio_control', handleAudioControl);
+
+		return () => {
+			socket.off('audio_control', handleAudioControl);
+			if (audioRef.current) {
+				audioRef.current.pause();
+				audioRef.current = null;
+			}
+		};
+	}, [socket]);
 
 	// Loading state
 	if (loading) {
@@ -173,6 +221,16 @@ export const PlayerSessionPage: React.FC = () => {
 						: undefined
 				}
 			/>
+
+			{/* Media preload progress bar */}
+			{!preloadProgress.isComplete && preloadProgress.total > 0 && (
+				<div className={styles.preloadBar}>
+					<div className={styles.preloadProgress} style={{ width: `${preloadProgress.percentage}%` }} />
+					<span className={styles.preloadText}>
+						<Trans>Medien laden...</Trans> {preloadProgress.loaded}/{preloadProgress.total} ({preloadProgress.percentage}%)
+					</span>
+				</div>
+			)}
 		</div>
 	);
 };

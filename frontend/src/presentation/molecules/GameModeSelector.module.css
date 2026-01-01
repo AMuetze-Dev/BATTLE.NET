@@ -26,7 +26,6 @@
 }
 
 .option:hover {
-	border-color: var(--color-primary);
 	background: var(--color-surface-hover);
 }
 
@@ -35,7 +34,6 @@
 }
 
 .option.active {
-	background: var(--color-primary-100, rgba(14, 165, 233, 0.15));
 	border-color: var(--color-primary);
 }
 

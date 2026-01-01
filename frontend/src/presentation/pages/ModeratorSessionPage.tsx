@@ -14,6 +14,7 @@ import { FileUpload, TeamControls } from '../molecules';
 import { ModeratorSessionHeader, ModeratorControlBar, ModeratorQuestionArea, ModeratorLeaderboard } from '../organisms';
 import { useModeratorSession } from '../../hooks/useModeratorSession';
 import { useQuizUpload } from '../../hooks/useQuizUpload';
+import { useMediaPreloader } from '../../hooks/useMediaPreloader';
 import styles from './ModeratorSessionPage.module.css';
 
 /**
@@ -49,6 +50,7 @@ export const ModeratorSessionPage: React.FC = () => {
 		buzzerWinner,
 		isTeamMode,
 		teams,
+		socket,
 		handleNextQuestion,
 		handlePrevQuestion,
 		handleRevealQuestion,
@@ -75,6 +77,9 @@ export const ModeratorSessionPage: React.FC = () => {
 			reloadSession();
 		},
 	});
+
+	// Preload all media files in background
+	const preloadProgress = useMediaPreloader(questions || [], !loading && questions.length > 0);
 
 	// Loading state
 	if (loading) {
@@ -160,6 +165,8 @@ export const ModeratorSessionPage: React.FC = () => {
 							onBuzzerWrong={handleBuzzerWrong}
 							onScoreChange={handleScoreChange}
 							setHoveredPlayerId={setHoveredPlayerId}
+							sessionId={sessionId}
+							socket={socket}
 						/>
 					)}
 				</div>
@@ -172,6 +179,16 @@ export const ModeratorSessionPage: React.FC = () => {
 			<Modal isOpen={showUploadModal} onClose={closeUploadModal} title="Upload Question Catalog" size="md">
 				<FileUpload accept=".zip" maxSize={50} onFileSelect={setUploadFile} onUpload={handleUpload} loading={uploading} error={uploadError} />
 			</Modal>
+
+			{/* Media preload progress bar */}
+			{!preloadProgress.isComplete && preloadProgress.total > 0 && (
+				<div className={styles.preloadBar}>
+					<div className={styles.preloadProgress} style={{ width: `${preloadProgress.percentage}%` }} />
+					<span className={styles.preloadText}>
+						<Trans>Medien laden...</Trans> {preloadProgress.loaded}/{preloadProgress.total} ({preloadProgress.percentage}%)
+					</span>
+				</div>
+			)}
 		</>
 	);
 };

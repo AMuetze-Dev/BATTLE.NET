@@ -842,6 +842,32 @@ async def toggle_buzzer_lock(sid: str, data: dict):
 
 
 @sio.event
+async def play_audio(sid: str, data: dict):
+    """Moderator plays audio for all players."""
+    session_id = data.get('session_id')
+    action = data.get('action')  # 'play', 'pause', 'stop'
+    audio_src = data.get('audio_src')
+    current_time = data.get('current_time', 0)
+    
+    if not session_id:
+        await sio.emit('error', {'message': 'session_id required'}, room=sid)
+        return
+    
+    if session_id not in session_game_states:
+        await sio.emit('error', {'message': 'Session not found'}, room=sid)
+        return
+    
+    # Broadcast audio control to all players
+    await sio.emit('audio_control', {
+        'action': action,
+        'audio_src': audio_src,
+        'current_time': current_time
+    }, room=f"session_{session_id}", skip_sid=sid)
+    
+    logger.info(f"Audio control: session={session_id}, action={action}")
+
+
+@sio.event
 async def award_points_correct(sid: str, data: dict):
     """Award points to buzzer winner (correct answer)."""
     session_id = data.get('session_id')

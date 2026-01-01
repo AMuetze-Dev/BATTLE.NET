@@ -21,6 +21,8 @@ CREATE TABLE sessions (
     question_catalog JSONB,                         -- Gecachtes XML als JSON
     current_question_id VARCHAR(50),                -- Aktuell angezeigte Frage
     metadata JSONB,                                 -- Zusätzliche Session-Metadaten
+    game_mode VARCHAR(20) NOT NULL DEFAULT 'free-for-all',
+    team_config JSONB,
     
     CONSTRAINT check_ended_at CHECK (
         (status = 'active' AND ended_at IS NULL) OR 
@@ -46,6 +48,7 @@ CREATE TABLE players (
     connected BOOLEAN NOT NULL DEFAULT TRUE,
     joined_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     last_seen TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    team_id VARCHAR(50),                            -- Team membership (nullable for free-for-all mode)
     
     CONSTRAINT unique_player_name_per_session UNIQUE(session_id, name),
     CONSTRAINT check_score_non_negative CHECK (score >= 0),

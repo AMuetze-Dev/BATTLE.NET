@@ -40,6 +40,9 @@ export interface PlayerSessionState {
   
   // Team mode
   isTeamMode: boolean;
+  
+  // WebSocket
+  socket: any;
 }
 
 /** Player session actions */
@@ -77,6 +80,7 @@ export const usePlayerSession = (): UsePlayerSessionReturn => {
     submitAnswer,
     pressBuzzer,
     isConnected,
+    socket,
   } = useWebSocket({
     onConnected: () => {
       if (sessionId && playerId && player) {
@@ -242,6 +246,7 @@ export const usePlayerSession = (): UsePlayerSessionReturn => {
     isInputLocked,
     buzzerWinner,
     isTeamMode,
+    socket,
     
     // Actions
     handleAnswerChange,

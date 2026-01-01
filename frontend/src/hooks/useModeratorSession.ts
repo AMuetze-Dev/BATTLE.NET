@@ -8,26 +8,12 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { api, Session } from '../services/api';
+import { api, Session, SessionQuestion } from '../services/api';
 import { useWebSocket } from './useWebSocket';
 import { GameState } from '../services/websocket';
 
-/** Question type from catalog */
-export interface QuizQuestion {
-  id?: string;
-  type: string;
-  text: string;
-  points?: number;
-  image?: string;
-  options?: string[];
-  correctAnswer?: string | number | string[];
-  sortingItems?: string[];
-  sliderMin?: number;
-  sliderMax?: number;
-  sliderStep?: number;
-  sliderUnit?: string;
-  tolerance?: number;
-}
+/** Re-export QuizQuestion for backward compatibility */
+export type QuizQuestion = SessionQuestion;
 
 /** Player derived from game state */
 export interface ModeratorPlayer {
@@ -77,6 +63,9 @@ export interface ModeratorSessionState {
   // Team mode
   isTeamMode: boolean;
   teams: Array<{ id: string; name: string; color: string; score: number; memberCount: number }>;
+  
+  // WebSocket
+  socket: any;
 }
 
 /** Moderator session actions */
@@ -160,6 +149,7 @@ export const useModeratorSession = (): UseModeratorSessionReturn => {
     isConnected,
     selectActivePlayers: wsSelectActivePlayers,
     updateTeamScore: wsUpdateTeamScore,
+    socket,
   } = useWebSocket({
     onConnected: () => {
       if (sessionId) {
@@ -374,8 +364,12 @@ export const useModeratorSession = (): UseModeratorSessionReturn => {
       const data = await api.sessions.get(sessionId);
       setSession(data);
       if (data.question_catalog?.questions) {
-        const catalogQuestions = data.question_catalog.questions.questions || data.question_catalog.questions;
-        setQuestions(Array.isArray(catalogQuestions) ? catalogQuestions : []);
+        const questionsData = data.question_catalog.questions;
+        // Handle both array and nested object structure
+        const catalogQuestions = Array.isArray(questionsData) 
+          ? questionsData 
+          : questionsData.questions;
+        setQuestions(catalogQuestions);
       }
     } catch (err) {
       console.error('Failed to reload session:', err);
@@ -419,6 +413,7 @@ export const useModeratorSession = (): UseModeratorSessionReturn => {
     currentTimer,
     isTeamMode,
     teams,
+    socket,
     
     // Actions
     handleStartQuestion,

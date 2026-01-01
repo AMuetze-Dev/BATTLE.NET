@@ -503,6 +503,10 @@ export class WebSocketClient {
   isConnected(): boolean {
     return this.socket?.connected ?? false;
   }
+  
+  getSocket(): Socket | null {
+    return this.socket;
+  }
 }
 
 // Singleton instance

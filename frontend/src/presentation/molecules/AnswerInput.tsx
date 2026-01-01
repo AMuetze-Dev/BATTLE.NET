@@ -291,7 +291,14 @@ export const AnswerInput: React.FC<AnswerInputProps> = ({ question, value, onCha
 				return <SortingInput value={value} onChange={onChange} items={getSortingItems()} locked={isInputLocked} />;
 
 			case 'matching':
-				return <MatchingInput value={value} onChange={onChange} pairs={question.matchingPairs || []} locked={isInputLocked} />;
+				// Transform editor format {id, left, right} to expected format {leftId, leftText, rightId, rightText}
+				const transformedPairs = (question.matchingPairs || []).map((pair: any, index: number) => ({
+					leftId: pair.leftId || pair.id || String(index),
+					leftText: pair.leftText || pair.left || '',
+					rightId: pair.rightId || pair.id || String(index),
+					rightText: pair.rightText || pair.right || '',
+				}));
+				return <MatchingInput value={value} onChange={onChange} pairs={transformedPairs} locked={isInputLocked} />;
 
 			case 'audio':
 				return (
@@ -299,7 +306,16 @@ export const AnswerInput: React.FC<AnswerInputProps> = ({ question, value, onCha
 				);
 
 			case 'image_choice':
-				return <ImageChoiceInput value={value} onChange={onChange} options={question.imageOptions || []} multiSelect={question.multiSelect} locked={isInputLocked} />;
+				// Transform editor format to expected format, supporting both imageUrl and imageData
+				// Use index as ID to keep answer payload minimal (just "0,1,2" instead of long IDs)
+				const transformedOptions = (question.imageOptions || []).map((opt: any, index: number) => ({
+					id: String(index),
+					imageUrl: opt.imageUrl || opt.imageData || '',
+					alt: opt.alt || opt.label || `Bild ${index + 1}`,
+				}));
+				const isMultiSelect = question.multiSelect || (question as any).imageChoiceMultiSelect;
+				const maxSelections = (question as any).requiredSelections !== undefined ? (question as any).requiredSelections : isMultiSelect ? undefined : 1;
+				return <ImageChoiceInput value={value} onChange={onChange} options={transformedOptions} multiSelect={isMultiSelect} maxSelections={maxSelections} locked={isInputLocked} />;
 
 			case 'geolocation':
 				return <GeolocationInput value={value} onChange={onChange} mode={question.geoMode || 'image'} imageUrl={getHotspotImage()} locked={isInputLocked} />;

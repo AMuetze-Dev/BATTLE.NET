@@ -228,5 +228,7 @@ export const useWebSocket = (handlers: WebSocketEventHandlers = {}) => {
     playerJoinTeam,
     selectActivePlayers,
     updateTeamScore,
+    // Raw socket access for custom events
+    socket: wsClient.getSocket(),
   };
 };

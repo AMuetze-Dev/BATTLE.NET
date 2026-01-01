@@ -23,11 +23,13 @@ export interface ImageChoiceInputProps {
 	options: ImageOption[];
 	/** Whether multiple images can be selected */
 	multiSelect?: boolean;
+	/** Maximum number of selections allowed (for multi-select) */
+	maxSelections?: number;
 	/** Whether input is locked */
 	locked?: boolean;
 }
 
-export const ImageChoiceInput: React.FC<ImageChoiceInputProps> = ({ value, onChange, options, multiSelect = false, locked = false }) => {
+export const ImageChoiceInput: React.FC<ImageChoiceInputProps> = ({ value, onChange, options, multiSelect = false, maxSelections, locked = false }) => {
 	const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set());
 	const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
 
@@ -47,6 +49,10 @@ export const ImageChoiceInput: React.FC<ImageChoiceInputProps> = ({ value, onCha
 				if (newSelected.has(id)) {
 					newSelected.delete(id);
 				} else {
+					// Check max selections limit
+					if (maxSelections && newSelected.size >= maxSelections) {
+						return; // Don't allow more selections
+					}
 					newSelected.add(id);
 				}
 				onChange(Array.from(newSelected).join(','));
@@ -54,7 +60,7 @@ export const ImageChoiceInput: React.FC<ImageChoiceInputProps> = ({ value, onCha
 				onChange(selectedIds.has(id) ? '' : id);
 			}
 		},
-		[locked, multiSelect, selectedIds, onChange]
+		[locked, multiSelect, maxSelections, selectedIds, onChange]
 	);
 
 	// Handle image load
@@ -83,7 +89,13 @@ export const ImageChoiceInput: React.FC<ImageChoiceInputProps> = ({ value, onCha
 			{/* Multi-select hint */}
 			{multiSelect && (
 				<div className={styles.hint}>
-					<Trans>Wähle alle passenden Bilder aus</Trans>
+					{maxSelections ? (
+						<Trans>
+							Wähle genau {maxSelections} Bilder aus ({selectedIds.size}/{maxSelections})
+						</Trans>
+					) : (
+						<Trans>Wähle alle passenden Bilder aus</Trans>
+					)}
 				</div>
 			)}
 
