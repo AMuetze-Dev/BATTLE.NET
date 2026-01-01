@@ -6,6 +6,7 @@
 import React from 'react';
 import styled from 'styled-components';
 import { colors } from '../theme';
+import { Icon } from '../presentation/atoms';
 
 interface ProgressBarProps {
 	current: number;
@@ -54,7 +55,7 @@ export const StepProgress: React.FC<StepProgressProps> = ({ steps, currentStep }
 
 				return (
 					<StepItem key={step.id} role="listitem">
-						<StepIndicator $status={status}>{status === 'completed' ? '✓' : index + 1}</StepIndicator>
+						<StepIndicator $status={status}>{status === 'completed' ? <Icon name="check" size="xs" /> : index + 1}</StepIndicator>
 						<StepContent>
 							<StepLabel $status={status}>{step.label}</StepLabel>
 							{step.description && <StepDescription>{step.description}</StepDescription>}

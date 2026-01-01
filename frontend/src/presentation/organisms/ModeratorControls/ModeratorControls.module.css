@@ -1,0 +1,171 @@
+/**
+ * ModeratorControls CSS Module - Battle.Net Quiz Platform
+ * 
+ * Styling for the moderator control panel.
+ */
+
+.container {
+  display: flex;
+  align-items: stretch;
+  gap: var(--spacing-md);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  flex-wrap: wrap;
+  justify-content: space-between;
+  transition: background var(--transition-normal), border-color var(--transition-normal);
+}
+
+/* Section */
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm);
+  background: var(--color-bg-primary);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border-subtle);
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow var(--transition-fast), border-color var(--transition-fast);
+  min-width: 0;
+  flex: 1;
+  min-width: 150px;
+}
+
+.section:hover {
+  border-color: var(--color-primary-border);
+  box-shadow: var(--shadow-md);
+}
+
+.sectionTitle {
+  margin: 0;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-primary);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding-bottom: var(--spacing-xs);
+  border-bottom: 1px solid var(--color-primary-bg);
+}
+
+.icon {
+  font-size: var(--font-size-sm);
+}
+
+/* Button Row */
+.buttonRow {
+  display: flex;
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+/* Question Indicator */
+.questionIndicator {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  background: var(--color-primary-bg);
+  color: var(--color-primary);
+  border-radius: var(--radius-sm);
+  min-width: 60px;
+  text-align: center;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Timer Row */
+.timerRow {
+  display: flex;
+  gap: var(--spacing-sm);
+  align-items: center;
+}
+
+.timerInput {
+  width: 60px;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  background: var(--color-bg-primary);
+  color: var(--color-text-primary);
+}
+
+.timerInput:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px var(--color-primary-bg);
+}
+
+.timerInput:disabled {
+  background: var(--color-bg-muted);
+  color: var(--color-text-disabled);
+}
+
+.timerUnit {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  font-weight: var(--font-weight-medium);
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+  .container {
+    gap: var(--spacing-sm);
+  }
+
+  .section {
+    min-width: 130px;
+  }
+}
+
+@media (max-width: 768px) {
+  .container {
+    flex-direction: column;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    gap: var(--spacing-sm);
+  }
+
+  .section {
+    width: 100%;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--spacing-xs);
+  }
+
+  .sectionTitle {
+    padding-bottom: 0;
+    border-bottom: none;
+    font-size: var(--font-size-sm);
+  }
+
+  .buttonRow {
+    gap: var(--spacing-xs);
+    justify-content: flex-end;
+  }
+
+  .timerRow {
+    gap: var(--spacing-xs);
+  }
+
+  .timerInput {
+    width: 50px;
+  }
+}
+
+@media (max-width: 480px) {
+  .section {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .buttonRow {
+    justify-content: center;
+  }
+}

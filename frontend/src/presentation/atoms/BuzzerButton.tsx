@@ -5,6 +5,7 @@ import React from 'react';
 import styled, { css, keyframes } from 'styled-components';
 import { Trans } from '@lingui/react/macro';
 import { colors, spacing, typography, borderRadius } from '../../theme';
+import { Icon } from './Icon';
 
 export interface BuzzerButtonProps {
 	onPress: () => void;
@@ -60,14 +61,10 @@ const StyledButton = styled.button<{ $pressed: boolean; $locked: boolean }>`
 		`}
 `;
 
-const Icon = styled.span`
-	font-size: ${typography.fontSize['2xl']};
-`;
-
 export const BuzzerButton: React.FC<BuzzerButtonProps> = ({ onPress, locked = false, pressed = false }) => {
 	return (
 		<StyledButton type="button" onClick={onPress} disabled={locked} $pressed={pressed} $locked={locked} aria-label="Buzzer">
-			<Icon>🔔</Icon>
+			<Icon name="bell" size="lg" />
 			<Trans id="input.buzzer">BUZZER</Trans>
 		</StyledButton>
 	);

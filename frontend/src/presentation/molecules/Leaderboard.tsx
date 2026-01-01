@@ -1,11 +1,19 @@
 /**
- * Leaderboard component - Display player rankings
+ * Leaderboard Molecule - Battle.Net Quiz Platform
+ *
+ * Unified leaderboard component using CSS Modules.
+ * Supports both Player view (read-only) and Moderator view (with controls).
+ *
+ * @module molecules/Leaderboard
  */
-import React from 'react';
-import styled from 'styled-components';
-import { Card } from '../atoms';
-import { colors, spacing, typography, borderRadius } from '../../theme';
 
+import React from 'react';
+import { Trans } from '@lingui/react/macro';
+import { Icon } from '../atoms';
+import { LeaderboardItem } from '../atoms/LeaderboardItem';
+import styles from './Leaderboard.module.css';
+
+/** Entry data for leaderboard */
 export interface LeaderboardEntry {
 	player_id: number;
 	player_name: string;
@@ -13,190 +21,130 @@ export interface LeaderboardEntry {
 	rank: number;
 	correct_answers?: number;
 	total_answers?: number;
+	connected?: boolean;
+	answered?: boolean;
 }
 
 export interface LeaderboardProps {
+	/** List of player entries */
 	entries: LeaderboardEntry[];
+	/** Show stats (correct/total answers) */
 	showStats?: boolean;
+	/** Current user's player ID for highlighting */
 	highlightPlayerId?: number;
+	/** Total connected count (for header display) */
+	connectedCount?: number;
+	/** Callback for score changes (moderator only) */
+	onScoreChange?: (playerId: number, delta: number) => void;
+	/** Custom title */
+	title?: React.ReactNode;
+	/** Whether to show connection status dots */
+	showConnectionStatus?: boolean;
 }
 
-const LeaderboardContainer = styled(Card)`
-	overflow: hidden;
-`;
+/**
+ * Unified leaderboard component.
+ * 
+ * Usage in Player view:
+ * ```tsx
+ * <Leaderboard entries={entries} highlightPlayerId={currentPlayerId} />
+ * ```
+ * 
+ * Usage in Moderator view:
+ * ```tsx
+ * <Leaderboard 
+ *   entries={entries} 
+ *   onScoreChange={handleScoreChange}
+ *   connectedCount={5}
+ *   showConnectionStatus
+ * />
+ * ```
+ */
+export const Leaderboard: React.FC<LeaderboardProps> = ({
+	entries,
+	showStats = false,
+	highlightPlayerId,
+	connectedCount,
+	onScoreChange,
+	title,
+	showConnectionStatus = false,
+}) => {
+	const sortedEntries = [...entries].sort((a, b) => b.score - a.score);
+	const isModerator = !!onScoreChange;
 
-const Header = styled.div`
-	padding: ${spacing.sm} ${spacing.md};
-	background: linear-gradient(135deg, ${colors.primary[600]} 0%, ${colors.primary[700]} 100%);
-	color: ${colors.text.inverse};
-`;
+	// Generate stats string
+	const getStats = (entry: LeaderboardEntry): string | undefined => {
+		if (!showStats || entry.correct_answers === undefined) return undefined;
+		return `${entry.correct_answers}/${entry.total_answers} correct`;
+	};
 
-const Title = styled.h2`
-	margin: 0;
-	font-size: ${typography.fontSize.md};
-	font-weight: ${typography.fontWeight.bold};
-`;
-
-const EntriesList = styled.div`
-	padding: ${spacing.xs};
-	display: flex;
-	flex-direction: column;
-	gap: ${spacing.xs};
-`;
-
-const EntryRow = styled.div<{ rank: number; highlight?: boolean }>`
-	display: grid;
-	grid-template-columns: 36px 1fr auto;
-	align-items: center;
-	gap: ${spacing.sm};
-	padding: ${spacing.xs} ${spacing.sm};
-	border-radius: ${borderRadius.sm};
-	background: ${({ highlight }) => (highlight ? colors.primary[50] : colors.surface)};
-	border: 1px solid ${({ highlight }) => (highlight ? colors.primary[300] : 'transparent')};
-	transition: all 0.2s ease;
-
-	${({ rank }) =>
-		rank === 1 &&
-		`
-    background: linear-gradient(135deg, ${colors.primary[100]} 0%, ${colors.primary[50]} 100%);
-    border-color: ${colors.primary[400]};
-  `}
-
-	${({ rank }) =>
-		rank === 2 &&
-		`
-    background: ${colors.neutral[100]};
-    border-color: ${colors.neutral[300]};
-  `}
-  
-  ${({ rank }) =>
-		rank === 3 &&
-		`
-    background: ${colors.primary[50]};
-    border-color: ${colors.primary[200]};
-  `}
-  
-  &:hover {
-		transform: translateX(2px);
-		box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
-	}
-`;
-
-const RankBadge = styled.div<{ rank: number }>`
-	width: 28px;
-	height: 28px;
-	border-radius: 50%;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	font-size: ${typography.fontSize.sm};
-	font-weight: ${typography.fontWeight.bold};
-	background: ${colors.neutral[200]};
-	color: ${colors.text.primary};
-
-	${({ rank }) =>
-		rank === 1 &&
-		`
-    background: ${colors.primary[500]};
-    color: ${colors.text.inverse};
-    box-shadow: 0 2px 6px rgba(14, 165, 233, 0.4);
-  `}
-
-	${({ rank }) =>
-		rank === 2 &&
-		`
-    background: ${colors.neutral[400]};
-    color: ${colors.text.inverse};
-  `}
-  
-  ${({ rank }) =>
-		rank === 3 &&
-		`
-    background: ${colors.primary[400]};
-    color: ${colors.text.inverse};
-  `}
-`;
-
-const PlayerInfo = styled.div`
-	display: flex;
-	flex-direction: column;
-	gap: ${spacing.xs};
-`;
-
-const PlayerName = styled.span`
-	font-size: ${typography.fontSize.sm};
-	font-weight: ${typography.fontWeight.semibold};
-	color: ${colors.text.primary};
-	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: ellipsis;
-`;
-
-const PlayerStats = styled.span`
-	font-size: ${typography.fontSize.xs};
-	color: ${colors.text.secondary};
-`;
-
-const ScoreBadge = styled.div`
-	color: ${colors.primary[600]};
-	font-size: ${typography.fontSize.sm};
-	font-weight: ${typography.fontWeight.bold};
-	white-space: nowrap;
-`;
-
-const EmptyState = styled.div`
-	padding: ${spacing.md};
-	text-align: center;
-	color: ${colors.text.secondary};
-	font-size: ${typography.fontSize.sm};
-`;
-
-const getMedalEmoji = (rank: number): string => {
-	switch (rank) {
-		case 1:
-			return '🥇';
-		case 2:
-			return '🥈';
-		case 3:
-			return '🥉';
-		default:
-			return String(rank);
-	}
-};
-
-export const Leaderboard: React.FC<LeaderboardProps> = ({ entries, showStats = false, highlightPlayerId }) => {
-	if (entries.length === 0) {
+	// Render score control buttons for moderator
+	const renderScoreControls = (playerId: number) => {
+		if (!onScoreChange) return null;
+		
 		return (
-			<LeaderboardContainer variant="outlined" padding="none">
-				<Header>
-					<Title>🏆 Leaderboard</Title>
-				</Header>
-				<EmptyState>No players yet. Join to compete!</EmptyState>
-			</LeaderboardContainer>
+			<div className={styles.scoreControls}>
+				<button
+					className={`${styles.scoreButton} ${styles.subtract}`}
+					onClick={() => onScoreChange(playerId, -1)}
+					title="-1"
+				>
+					−
+				</button>
+				<button
+					className={`${styles.scoreButton} ${styles.add}`}
+					onClick={() => onScoreChange(playerId, 1)}
+					title="+1"
+				>
+					+
+				</button>
+			</div>
 		);
-	}
+	};
 
 	return (
-		<LeaderboardContainer variant="outlined" padding="none">
-			<Header>
-				<Title>🏆 Leaderboard</Title>
-			</Header>
-			<EntriesList>
-				{entries.map((entry) => (
-					<EntryRow key={entry.player_id} rank={entry.rank} highlight={entry.player_id === highlightPlayerId}>
-						<RankBadge rank={entry.rank}>{getMedalEmoji(entry.rank)}</RankBadge>
-						<PlayerInfo>
-							<PlayerName>{entry.player_name}</PlayerName>
-							{showStats && entry.correct_answers !== undefined && (
-								<PlayerStats>
-									{entry.correct_answers}/{entry.total_answers} correct
-								</PlayerStats>
-							)}
-						</PlayerInfo>
-						<ScoreBadge>{entry.score} pts</ScoreBadge>
-					</EntryRow>
-				))}
-			</EntriesList>
-		</LeaderboardContainer>
+		<div className={styles.container}>
+			<header className={styles.header}>
+				<h3 className={styles.title}>
+					<Icon name="trophy" size="sm" color="inverse" />
+					{title ?? <Trans id="leaderboard.title">Rangliste</Trans>}
+				</h3>
+				{connectedCount !== undefined && (
+					<span className={styles.playerCount}>
+						{connectedCount}/{entries.length}
+					</span>
+				)}
+			</header>
+
+			{sortedEntries.length === 0 ? (
+				<div className={styles.empty}>
+					<span className={styles.emptyIcon}>👥</span>
+					<p className={styles.emptyText}>
+						<Trans id="leaderboard.empty">Noch keine Spieler</Trans>
+					</p>
+					<p className={styles.emptyHint}>
+						<Trans id="leaderboard.shareCode">Teile den Session-Code!</Trans>
+					</p>
+				</div>
+			) : (
+				<div className={styles.list}>
+					{sortedEntries.map((entry, index) => (
+						<LeaderboardItem
+							key={entry.player_id}
+							rank={index + 1}
+							name={entry.player_name}
+							score={entry.score}
+							isCurrentUser={entry.player_id === highlightPlayerId}
+							isConnected={showConnectionStatus || isModerator ? entry.connected : undefined}
+							hasAnswered={isModerator ? entry.answered : undefined}
+							stats={getStats(entry)}
+							actions={renderScoreControls(entry.player_id)}
+						/>
+					))}
+				</div>
+			)}
+		</div>
 	);
 };
+
+export default Leaderboard;

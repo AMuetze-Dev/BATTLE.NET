@@ -1,53 +1,46 @@
 /**
- * Connection Status Component
- * Unified component for displaying connection/disconnection status
- * Blue for connected, Red for disconnected (exceptions only)
+ * Connection Status Component - Battle.Net Quiz Platform
+ *
+ * Unified component for displaying connection status.
+ * Uses centralized CSS classes from components.css.
+ *
+ * Colors:
+ * - Primary (Blue) for connected
+ * - Error (Red) for disconnected (exceptions only)
  */
 import React from 'react';
-import styled from 'styled-components';
-import { colors, spacing, typography } from '../../theme';
 
-interface ConnectionStatusProps {
+export interface ConnectionStatusProps {
+	/** Connection state */
 	connected: boolean;
+	/** Show text label */
+	showLabel?: boolean;
+	/** Use light/inverted colors (for dark/blue backgrounds) */
+	inverted?: boolean;
+	/** Additional CSS class */
 	className?: string;
 }
 
-const StatusContainer = styled.div<{ $connected: boolean }>`
-	display: flex;
-	align-items: center;
-	gap: ${spacing.sm};
-	padding: ${spacing.sm} ${spacing.md};
-	border-radius: 20px;
-	background: ${({ $connected }) => ($connected ? colors.primary[50] : colors.error[50])};
-	color: ${({ $connected }) => ($connected ? colors.primary[700] : colors.error[700])};
-	font-size: ${typography.fontSize.sm};
-	font-weight: ${typography.fontWeight.medium};
-	transition: all 0.2s ease;
-`;
-
-const StatusDot = styled.span<{ $connected: boolean }>`
-	width: 8px;
-	height: 8px;
-	border-radius: 50%;
-	background: ${({ $connected }) => ($connected ? colors.primary[500] : colors.error[500])};
-	animation: ${({ $connected }) => ($connected ? 'none' : 'pulse 2s infinite')};
-
-	@keyframes pulse {
-		0%,
-		100% {
-			opacity: 1;
-		}
-		50% {
-			opacity: 0.5;
-		}
+/**
+ * ConnectionStatus - Displays connection state with dot indicator
+ */
+export const ConnectionStatus: React.FC<ConnectionStatusProps> = ({ connected, showLabel = true, inverted = false, className = '' }) => {
+	// Choose badge variant based on inverted mode
+	let badgeClass: string;
+	if (inverted) {
+		badgeClass = connected ? 'badge-light-success' : 'badge-light-error';
+	} else {
+		badgeClass = connected ? 'badge-primary' : 'badge-error';
 	}
-`;
 
-export const ConnectionStatus: React.FC<ConnectionStatusProps> = ({ connected, className }) => {
+	const containerClasses = ['badge', badgeClass, className].filter(Boolean).join(' ');
+
+	const dotClasses = ['connection-dot', connected ? 'connection-dot-connected' : 'connection-dot-disconnected'].join(' ');
+
 	return (
-		<StatusContainer $connected={connected} className={className}>
-			<StatusDot $connected={connected} />
-			{connected ? 'Verbunden' : 'Getrennt'}
-		</StatusContainer>
+		<span className={containerClasses}>
+			<span className={dotClasses} aria-hidden="true" />
+			{showLabel && (connected ? 'Verbunden' : 'Getrennt')}
+		</span>
 	);
 };

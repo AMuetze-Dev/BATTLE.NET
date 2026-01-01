@@ -1,0 +1,227 @@
+/**
+ * Battle.Net Quiz Platform - Color Themes
+ * 
+ * Predefined color themes with background, contrast, and accent colors.
+ * Users can select themes at any time.
+ * 
+ * Theme Structure:
+ * - Background: Main page background
+ * - Contrast: Text, borders, and surface colors
+ * - Accent: Primary action color (buttons, links, highlights)
+ */
+
+/* ==================== DEFAULT THEME: Ocean Blue ==================== */
+[data-color-theme="ocean"],
+:root {
+	/* Accent - Blue */
+	--theme-accent-50: #f0f9ff;
+	--theme-accent-100: #e0f2fe;
+	--theme-accent-200: #bae6fd;
+	--theme-accent-300: #7dd3fc;
+	--theme-accent-400: #38bdf8;
+	--theme-accent-500: #0ea5e9;
+	--theme-accent-600: #0284c7;
+	--theme-accent-700: #0369a1;
+	--theme-accent-800: #075985;
+	--theme-accent-900: #0c4a6e;
+	
+	/* Map to semantic colors */
+	--color-primary: var(--theme-accent-500);
+	--color-primary-hover: var(--theme-accent-600);
+	--color-primary-active: var(--theme-accent-700);
+	--color-primary-bg-dark: color-mix(in srgb, var(--theme-accent-500) 15%, transparent);
+}
+
+/* ==================== THEME: Sunset Orange ==================== */
+[data-color-theme="sunset"] {
+	/* Accent - Orange */
+	--theme-accent-50: #fff7ed;
+	--theme-accent-100: #ffedd5;
+	--theme-accent-200: #fed7aa;
+	--theme-accent-300: #fdba74;
+	--theme-accent-400: #fb923c;
+	--theme-accent-500: #f97316;
+	--theme-accent-600: #ea580c;
+	--theme-accent-700: #c2410c;
+	--theme-accent-800: #9a3412;
+	--theme-accent-900: #7c2d12;
+	
+	/* Dark mode background */
+	--color-primary-bg-dark: color-mix(in srgb, var(--theme-accent-500) 15%, transparent);
+	
+	/* Gradient overrides */
+	--gradient-primary: linear-gradient(135deg, var(--theme-accent-500) 0%, var(--theme-accent-600) 100%);
+	--gradient-primary-dark: linear-gradient(135deg, var(--theme-accent-600) 0%, var(--theme-accent-700) 100%);
+	
+	/* Override primary colors */
+	--color-primary-50: var(--theme-accent-50);
+	--color-primary-100: var(--theme-accent-100);
+	--color-primary-200: var(--theme-accent-200);
+	--color-primary-300: var(--theme-accent-300);
+	--color-primary-400: var(--theme-accent-400);
+	--color-primary-500: var(--theme-accent-500);
+	--color-primary-600: var(--theme-accent-600);
+	--color-primary-700: var(--theme-accent-700);
+	--color-primary-800: var(--theme-accent-800);
+	--color-primary-900: var(--theme-accent-900);
+}
+
+/* ==================== THEME: Forest Green ==================== */
+[data-color-theme="forest"] {
+	/* Accent - Green */
+	--theme-accent-50: #f0fdf4;
+	--theme-accent-100: #dcfce7;
+	--theme-accent-200: #bbf7d0;
+	--theme-accent-300: #86efac;
+	--theme-accent-400: #4ade80;
+	--theme-accent-500: #22c55e;
+	--theme-accent-600: #16a34a;
+	--theme-accent-700: #15803d;
+	--theme-accent-800: #166534;
+	--theme-accent-900: #14532d;
+	
+	/* Dark mode background */
+	--color-primary-bg-dark: color-mix(in srgb, var(--theme-accent-500) 15%, transparent);
+	
+	--gradient-primary: linear-gradient(135deg, var(--theme-accent-500) 0%, var(--theme-accent-600) 100%);
+	--gradient-primary-dark: linear-gradient(135deg, var(--theme-accent-600) 0%, var(--theme-accent-700) 100%);
+	
+	--color-primary-50: var(--theme-accent-50);
+	--color-primary-100: var(--theme-accent-100);
+	--color-primary-200: var(--theme-accent-200);
+	--color-primary-300: var(--theme-accent-300);
+	--color-primary-400: var(--theme-accent-400);
+	--color-primary-500: var(--theme-accent-500);
+	--color-primary-600: var(--theme-accent-600);
+	--color-primary-700: var(--theme-accent-700);
+	--color-primary-800: var(--theme-accent-800);
+	--color-primary-900: var(--theme-accent-900);
+}
+
+/* ==================== THEME: Royal Purple ==================== */
+[data-color-theme="royal"] {
+	/* Accent - Purple */
+	--theme-accent-50: #faf5ff;
+	--theme-accent-100: #f3e8ff;
+	--theme-accent-200: #e9d5ff;
+	--theme-accent-300: #d8b4fe;
+	--theme-accent-400: #c084fc;
+	--theme-accent-500: #a855f7;
+	--theme-accent-600: #9333ea;
+	--theme-accent-700: #7c3aed;
+	--theme-accent-800: #6b21a8;
+	--theme-accent-900: #581c87;
+	
+	/* Dark mode background */
+	--color-primary-bg-dark: color-mix(in srgb, var(--theme-accent-500) 15%, transparent);
+	
+	--gradient-primary: linear-gradient(135deg, var(--theme-accent-500) 0%, var(--theme-accent-600) 100%);
+	--gradient-primary-dark: linear-gradient(135deg, var(--theme-accent-600) 0%, var(--theme-accent-700) 100%);
+	
+	--color-primary-50: var(--theme-accent-50);
+	--color-primary-100: var(--theme-accent-100);
+	--color-primary-200: var(--theme-accent-200);
+	--color-primary-300: var(--theme-accent-300);
+	--color-primary-400: var(--theme-accent-400);
+	--color-primary-500: var(--theme-accent-500);
+	--color-primary-600: var(--theme-accent-600);
+	--color-primary-700: var(--theme-accent-700);
+	--color-primary-800: var(--theme-accent-800);
+	--color-primary-900: var(--theme-accent-900);
+}
+
+/* ==================== THEME: Cherry Red ==================== */
+[data-color-theme="cherry"] {
+	/* Accent - Red/Rose */
+	--theme-accent-50: #fff1f2;
+	--theme-accent-100: #ffe4e6;
+	--theme-accent-200: #fecdd3;
+	--theme-accent-300: #fda4af;
+	--theme-accent-400: #fb7185;
+	--theme-accent-500: #f43f5e;
+	--theme-accent-600: #e11d48;
+	--theme-accent-700: #be123c;
+	--theme-accent-800: #9f1239;
+	--theme-accent-900: #881337;
+	
+	/* Dark mode background */
+	--color-primary-bg-dark: color-mix(in srgb, var(--theme-accent-500) 15%, transparent);
+	
+	--gradient-primary: linear-gradient(135deg, var(--theme-accent-500) 0%, var(--theme-accent-600) 100%);
+	--gradient-primary-dark: linear-gradient(135deg, var(--theme-accent-600) 0%, var(--theme-accent-700) 100%);
+	
+	--color-primary-50: var(--theme-accent-50);
+	--color-primary-100: var(--theme-accent-100);
+	--color-primary-200: var(--theme-accent-200);
+	--color-primary-300: var(--theme-accent-300);
+	--color-primary-400: var(--theme-accent-400);
+	--color-primary-500: var(--theme-accent-500);
+	--color-primary-600: var(--theme-accent-600);
+	--color-primary-700: var(--theme-accent-700);
+	--color-primary-800: var(--theme-accent-800);
+	--color-primary-900: var(--theme-accent-900);
+}
+
+/* ==================== THEME: Midnight Teal ==================== */
+[data-color-theme="midnight"] {
+	/* Accent - Teal */
+	--theme-accent-50: #f0fdfa;
+	--theme-accent-100: #ccfbf1;
+	--theme-accent-200: #99f6e4;
+	--theme-accent-300: #5eead4;
+	--theme-accent-400: #2dd4bf;
+	--theme-accent-500: #14b8a6;
+	--theme-accent-600: #0d9488;
+	--theme-accent-700: #0f766e;
+	--theme-accent-800: #115e59;
+	--theme-accent-900: #134e4a;
+	
+	/* Dark mode background */
+	--color-primary-bg-dark: color-mix(in srgb, var(--theme-accent-500) 15%, transparent);
+	
+	--gradient-primary: linear-gradient(135deg, var(--theme-accent-500) 0%, var(--theme-accent-600) 100%);
+	--gradient-primary-dark: linear-gradient(135deg, var(--theme-accent-600) 0%, var(--theme-accent-700) 100%);
+	
+	--color-primary-50: var(--theme-accent-50);
+	--color-primary-100: var(--theme-accent-100);
+	--color-primary-200: var(--theme-accent-200);
+	--color-primary-300: var(--theme-accent-300);
+	--color-primary-400: var(--theme-accent-400);
+	--color-primary-500: var(--theme-accent-500);
+	--color-primary-600: var(--theme-accent-600);
+	--color-primary-700: var(--theme-accent-700);
+	--color-primary-800: var(--theme-accent-800);
+	--color-primary-900: var(--theme-accent-900);
+}
+
+/* ==================== THEME: Golden Amber ==================== */
+[data-color-theme="golden"] {
+	/* Accent - Amber/Gold */
+	--theme-accent-50: #fffbeb;
+	--theme-accent-100: #fef3c7;
+	--theme-accent-200: #fde68a;
+	--theme-accent-300: #fcd34d;
+	--theme-accent-400: #fbbf24;
+	--theme-accent-500: #f59e0b;
+	--theme-accent-600: #d97706;
+	--theme-accent-700: #b45309;
+	--theme-accent-800: #92400e;
+	--theme-accent-900: #78350f;
+	
+	/* Dark mode background */
+	--color-primary-bg-dark: color-mix(in srgb, var(--theme-accent-500) 15%, transparent);
+	
+	--gradient-primary: linear-gradient(135deg, var(--theme-accent-500) 0%, var(--theme-accent-600) 100%);
+	--gradient-primary-dark: linear-gradient(135deg, var(--theme-accent-600) 0%, var(--theme-accent-700) 100%);
+	
+	--color-primary-50: var(--theme-accent-50);
+	--color-primary-100: var(--theme-accent-100);
+	--color-primary-200: var(--theme-accent-200);
+	--color-primary-300: var(--theme-accent-300);
+	--color-primary-400: var(--theme-accent-400);
+	--color-primary-500: var(--theme-accent-500);
+	--color-primary-600: var(--theme-accent-600);
+	--color-primary-700: var(--theme-accent-700);
+	--color-primary-800: var(--theme-accent-800);
+	--color-primary-900: var(--theme-accent-900);
+}

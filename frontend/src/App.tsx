@@ -24,6 +24,8 @@ const App: React.FC = () => {
 						<BrowserRouter>
 							<Routes>
 								<Route path="/" element={<HomePage />} />
+								<Route path="/join" element={<HomePage />} />
+								<Route path="/join/:inviteCode" element={<HomePage />} />
 								<Route path="/editor" element={<QuizEditorPage />} />
 								<Route path="/quiz-editor" element={<QuizEditorPage />} />
 								<Route path="/quiz-selection/:sessionId" element={<QuizSelectionPage />} />

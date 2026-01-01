@@ -3,6 +3,7 @@
  */
 import React from 'react';
 import styled from 'styled-components';
+import { Icon } from '../atoms';
 import { colors, spacing, typography } from '../../theme';
 
 export interface QuestionData {
@@ -60,7 +61,7 @@ export const QuestionDisplay: React.FC<QuestionDisplayProps> = ({ question, time
 						<AnswerButton key={answer.id} onClick={() => handleAnswerClick(answer.id)} className={getAnswerClassName(answer)} disabled={disabled}>
 							<AnswerNumber>{index + 1}</AnswerNumber>
 							<AnswerText>{answer.text}</AnswerText>
-							{showCorrect && answer.isCorrect && <CorrectIcon>✓</CorrectIcon>}
+							{showCorrect && answer.isCorrect && <Icon name="check" size="sm" color="success" />}
 						</AnswerButton>
 					))}
 				</AnswersList>
@@ -69,10 +70,10 @@ export const QuestionDisplay: React.FC<QuestionDisplayProps> = ({ question, time
 			{question.type === 'true-false' && (
 				<TrueFalseButtons>
 					<TrueFalseButton onClick={() => handleAnswerClick('true')} className={selectedAnswerId === 'true' ? 'selected' : ''} disabled={disabled}>
-						✓ Richtig
+						<Icon name="check" size="sm" /> Richtig
 					</TrueFalseButton>
 					<TrueFalseButton onClick={() => handleAnswerClick('false')} className={selectedAnswerId === 'false' ? 'selected' : ''} disabled={disabled}>
-						✗ Falsch
+						<Icon name="x" size="sm" /> Falsch
 					</TrueFalseButton>
 				</TrueFalseButtons>
 			)}
@@ -85,7 +86,9 @@ export const QuestionDisplay: React.FC<QuestionDisplayProps> = ({ question, time
 
 			{question.type === 'buzzer' && (
 				<BuzzerContainer>
-					<BuzzerButton disabled={disabled}>🔔 BUZZER</BuzzerButton>
+					<BuzzerButton disabled={disabled}>
+						<Icon name="bell" size="lg" /> BUZZER
+					</BuzzerButton>
 				</BuzzerContainer>
 			)}
 

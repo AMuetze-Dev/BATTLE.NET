@@ -1,93 +1,46 @@
 /**
- * Card component - Container for content sections
+ * Card Component - Battle.Net Quiz Platform
+ *
+ * Container for content sections.
+ * Uses centralized CSS classes from components.css.
  */
 import React from 'react';
-import styled, { css } from 'styled-components';
-import { colors, borderRadius, shadows, spacing } from '../../theme';
 
-export interface CardProps {
+export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
+	/** Card content */
 	children: React.ReactNode;
+	/** Visual variant */
 	variant?: 'default' | 'outlined' | 'elevated';
+	/** Padding size */
 	padding?: 'none' | 'sm' | 'md' | 'lg';
+	/** Hover effect */
 	hoverable?: boolean;
+	/** Clickable with pointer cursor */
 	clickable?: boolean;
-	onClick?: () => void;
-	className?: string;
 }
 
-// Transient props for styled-components
-interface StyledCardProps {
-	$variant?: CardProps['variant'];
-	$padding?: CardProps['padding'];
-	$hoverable?: boolean;
-	$clickable?: boolean;
-}
-
-const paddingStyles = {
-	none: css`
-		padding: 0;
-	`,
-	sm: css`
-		padding: ${spacing.md};
-	`,
-	md: css`
-		padding: ${spacing.lg};
-	`,
-	lg: css`
-		padding: ${spacing.xl};
-	`,
+const paddingMap: Record<string, string> = {
+	none: '',
+	sm: 'var(--spacing-2)',
+	md: 'var(--spacing-4)',
+	lg: 'var(--spacing-6)',
 };
 
-const variantStyles = {
-	default: css`
-		background: ${colors.surface};
-		border: none;
-	`,
-	outlined: css`
-		background: ${colors.background};
-		border: 1px solid ${colors.border.medium};
-	`,
-	elevated: css`
-		background: ${colors.background};
-		border: none;
-		box-shadow: ${shadows.md};
-	`,
-};
+/**
+ * Card - Container component for sections
+ */
+export const Card: React.FC<CardProps> = ({ children, variant = 'default', padding = 'md', hoverable = false, clickable = false, className = '', style, ...props }) => {
+	const classes = ['card', variant === 'elevated' && 'card-elevated', (hoverable || clickable) && 'card-interactive', className].filter(Boolean).join(' ');
 
-const StyledCard = styled.div<StyledCardProps>`
-	border-radius: ${borderRadius.lg};
-	overflow: hidden;
+	const combinedStyle: React.CSSProperties = {
+		padding: paddingMap[padding] || paddingMap.md,
+		cursor: clickable ? 'pointer' : undefined,
+		...style,
+	};
 
-	${({ $padding = 'md' }) => paddingStyles[$padding]}
-	${({ $variant = 'default' }) => variantStyles[$variant]}
-  
-  ${({ $hoverable, $clickable }) =>
-		($hoverable || $clickable) &&
-		css`
-			transition: all 0.2s ease;
-
-			&:hover {
-				box-shadow: ${shadows.lg};
-				transform: translateY(-2px);
-			}
-		`}
-  
-  ${({ $clickable }) =>
-		$clickable &&
-		css`
-			cursor: pointer;
-
-			&:active {
-				transform: translateY(0);
-				box-shadow: ${shadows.md};
-			}
-		`}
-`;
-
-export const Card: React.FC<CardProps> = ({ children, onClick, variant, padding, hoverable, clickable, className, ...props }) => {
 	return (
-		<StyledCard onClick={onClick} $variant={variant} $padding={padding} $hoverable={hoverable} $clickable={clickable} className={className} {...props}>
+		<div className={classes} style={combinedStyle} {...props}>
 			{children}
-		</StyledCard>
+		</div>
 	);
 };

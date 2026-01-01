@@ -1,0 +1,24 @@
+/* ModeratorLeaderboard Organism Styles - Battle.Net Quiz Platform */
+/* Wrapper for the unified Leaderboard molecule */
+
+.container {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	min-width: 280px;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+	.container {
+		min-width: 240px;
+	}
+}
+
+@media (max-width: 768px) {
+	.container {
+		min-width: 100%;
+		height: auto;
+		max-height: 40vh;
+	}
+}

@@ -1,100 +1,59 @@
 /**
- * Input component - Accessible text input field with full validation support
+ * Input Component - Battle.Net Quiz Platform
+ *
+ * Accessible text input field with validation support.
+ * Uses centralized CSS classes from components.css.
  */
-import React from 'react';
-import styled from 'styled-components';
-import { colors, borderRadius, spacing, transitions } from '../../theme';
+import React, { useId } from 'react';
 
 export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+	/** Input label */
 	label?: string;
+	/** Error message */
 	error?: string;
+	/** Helper text shown below input */
 	helperText?: string;
+	/** Full width mode */
 	fullWidth?: boolean;
+	/** Icon on the left */
 	leftIcon?: React.ReactNode;
+	/** Icon on the right */
 	rightIcon?: React.ReactNode;
 }
 
-// Transient props for styled-components
-interface StyledContainerProps {
-	$fullWidth?: boolean;
-}
+/**
+ * Input - Accessible text input with label and validation
+ */
+export const Input: React.FC<InputProps> = ({ label, error, helperText, fullWidth, leftIcon, rightIcon, id, className = '', ...props }) => {
+	const generatedId = useId();
+	const inputId = id || generatedId;
 
-interface StyledWrapperProps {
-	$hasError?: boolean;
-}
+	const containerStyle: React.CSSProperties = {
+		display: 'flex',
+		flexDirection: 'column',
+		gap: 'var(--spacing-1)',
+		width: fullWidth ? '100%' : 'auto',
+	};
 
-interface StyledHelperProps {
-	$isError?: boolean;
-}
-
-const InputContainer = styled.div<StyledContainerProps>`
-	display: flex;
-	flex-direction: column;
-	gap: ${spacing.xs};
-	width: ${({ $fullWidth }) => ($fullWidth ? '100%' : 'auto')};
-`;
-
-const Label = styled.label`
-	font-size: 14px;
-	font-weight: 500;
-	color: ${colors.text.primary};
-`;
-
-const InputWrapper = styled.div<StyledWrapperProps>`
-	display: flex;
-	align-items: center;
-	gap: ${spacing.sm};
-	padding: ${spacing.sm} ${spacing.md};
-	border: 2px solid ${({ $hasError }) => ($hasError ? colors.error[500] : colors.border.medium)};
-	border-radius: ${borderRadius.md};
-	background: ${colors.background};
-	transition: all ${transitions.fast};
-
-	&:focus-within {
-		border-color: ${({ $hasError }) => ($hasError ? colors.error[600] : colors.primary[500])};
-		box-shadow: 0 0 0 3px ${({ $hasError }) => ($hasError ? colors.error[100] : colors.primary[100])};
-	}
-
-	&:hover:not(:focus-within) {
-		border-color: ${({ $hasError }) => ($hasError ? colors.error[600] : colors.border.dark)};
-	}
-`;
-
-const StyledInput = styled.input`
-	flex: 1;
-	border: none;
-	outline: none;
-	background: transparent;
-	font-size: 16px;
-	color: ${colors.text.primary};
-
-	&::placeholder {
-		color: ${colors.text.disabled};
-	}
-
-	&:disabled {
-		color: ${colors.text.disabled};
-		cursor: not-allowed;
-	}
-`;
-
-const HelperText = styled.span<StyledHelperProps>`
-	font-size: 12px;
-	color: ${({ $isError }) => ($isError ? colors.error[600] : colors.text.secondary)};
-`;
-
-export const Input: React.FC<InputProps> = ({ label, error, helperText, fullWidth, leftIcon, rightIcon, id, ...props }) => {
-	const inputId = id || `input-${Math.random().toString(36).substr(2, 9)}`;
+	const wrapperClasses = ['input-group', error && 'input-error'].filter(Boolean).join(' ');
 
 	return (
-		<InputContainer $fullWidth={fullWidth}>
-			{label && <Label htmlFor={inputId}>{label}</Label>}
-			<InputWrapper $hasError={!!error}>
-				{leftIcon && <span>{leftIcon}</span>}
-				<StyledInput id={inputId} {...props} />
-				{rightIcon && <span>{rightIcon}</span>}
-			</InputWrapper>
-			{(error || helperText) && <HelperText $isError={!!error}>{error || helperText}</HelperText>}
-		</InputContainer>
+		<div style={containerStyle}>
+			{label && (
+				<label htmlFor={inputId} className="input-label">
+					{label}
+				</label>
+			)}
+			<div className={wrapperClasses}>
+				{leftIcon && <span className="input-icon">{leftIcon}</span>}
+				<input id={inputId} className={`input ${className}`} aria-invalid={!!error} aria-describedby={error || helperText ? `${inputId}-helper` : undefined} {...props} />
+				{rightIcon && <span className="input-icon">{rightIcon}</span>}
+			</div>
+			{(error || helperText) && (
+				<span id={`${inputId}-helper`} className={`input-helper ${error ? 'input-helper-error' : ''}`}>
+					{error || helperText}
+				</span>
+			)}
+		</div>
 	);
 };

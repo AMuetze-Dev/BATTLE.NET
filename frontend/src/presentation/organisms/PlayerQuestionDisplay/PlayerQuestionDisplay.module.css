@@ -1,0 +1,214 @@
+/**
+ * QuestionDisplay CSS Module - Battle.Net Quiz Platform
+ * 
+ * Fixed-height styling for the question display area.
+ * Layout remains stable regardless of image visibility.
+ */
+
+.container {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: var(--spacing-md) var(--spacing-xl);
+  text-align: center;
+  background: var(--color-surface);
+  /* Fixed height - does not change when image is shown */
+  height: 180px;
+  min-height: 180px;
+  max-height: 180px;
+  overflow: hidden;
+  position: relative;
+  transition: background var(--transition-normal), border-color var(--transition-normal);
+  border-bottom: 2px solid var(--color-border);
+}
+
+.hasQuestion {
+  background: var(--color-primary-bg);
+}
+
+/* Timer Display - Compact */
+.timer {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: var(--spacing-xs);
+  margin-bottom: var(--spacing-sm);
+  color: var(--color-primary-600);
+  transition: color var(--transition-fast), transform var(--transition-fast);
+}
+
+.timerValue {
+  font-size: var(--font-size-3xl);
+  font-weight: var(--font-weight-bold);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.timerUnit {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-medium);
+  opacity: 0.7;
+}
+
+.timerUrgent {
+  color: var(--color-error-600);
+  animation: pulse 0.5s ease-in-out infinite;
+}
+
+.timerUrgent .timerValue {
+  transform: scale(1.1);
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+/* Placeholder States */
+.placeholder {
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-md);
+  padding: var(--spacing-sm);
+}
+
+.waiting {
+  font-size: var(--font-size-2xl);
+  opacity: 0.5;
+  animation: bounce 1.5s ease-in-out infinite;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.finishedMessage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-md);
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.trophy {
+  font-size: 4rem;
+  animation: scaleIn 0.5s ease-out;
+}
+
+@keyframes scaleIn {
+  0% { transform: scale(0); opacity: 0; }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* Question Content - Compact Layout */
+.content {
+  max-width: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-lg);
+  animation: fadeIn var(--transition-normal) ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Question Image - Compact, fixed size */
+.imageContainer {
+  flex: 0 0 auto;
+  width: 120px;
+  height: 100px;
+  padding: var(--spacing-xs);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: var(--border-radius-md);
+  display: block;
+}
+
+/* Question Text - Compact */
+.questionText {
+  flex: 1;
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  margin: 0;
+  line-height: 1.4;
+  max-width: 600px;
+  word-wrap: break-word;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .container {
+    padding: var(--spacing-sm);
+    height: 160px;
+    min-height: 160px;
+    max-height: 160px;
+  }
+
+  .content {
+    flex-direction: column;
+    gap: var(--spacing-sm);
+  }
+
+  .timerValue {
+    font-size: var(--font-size-2xl);
+  }
+
+  .timerUnit {
+    font-size: var(--font-size-md);
+  }
+
+  .timer {
+    margin-bottom: var(--spacing-xs);
+  }
+
+  .imageContainer {
+    width: 100px;
+    height: 80px;
+    padding: var(--spacing-2xs);
+  }
+
+  .questionText {
+    font-size: var(--font-size-lg);
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: var(--spacing-xs);
+    height: 140px;
+    min-height: 140px;
+    max-height: 140px;
+  }
+
+  .timerValue {
+    font-size: var(--font-size-xl);
+  }
+
+  .imageContainer {
+    width: 80px;
+    height: 60px;
+  }
+
+  .questionText {
+    font-size: var(--font-size-md);
+  }
+}

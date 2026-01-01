@@ -7,7 +7,7 @@
 import React from 'react';
 import styled from 'styled-components';
 import { Trans } from '@lingui/react/macro';
-import { Button, TextInput, NumberInput, TrueFalseInput, MultipleChoiceInput, SliderInput, BuzzerButton, HotspotInput, SortingInput } from '../atoms';
+import { Button, TextInput, NumberInput, TrueFalseInput, MultipleChoiceInput, SliderInput, BuzzerButton, HotspotInput, SortingInput, Icon } from '../atoms';
 import { colors, spacing, typography, borderRadius } from '../../theme';
 
 // Normalized question types used internally
@@ -206,7 +206,17 @@ export const AnswerInput: React.FC<AnswerInputProps> = ({ question, value, onCha
 		if (buzzerWinner) {
 			return (
 				<Container>
-					<BuzzerWinnerDisplay>{iAmWinner ? <Trans id="player.youBuzzed">✓ Du hast gebuzzert!</Trans> : <Trans id="player.otherBuzzed">🔔 {buzzerWinner.player_name} hat gebuzzert!</Trans>}</BuzzerWinnerDisplay>
+					<BuzzerWinnerDisplay>
+						{iAmWinner ? (
+							<>
+								<Icon name="check" size="md" color="success" /> <Trans id="player.youBuzzed">Du hast gebuzzert!</Trans>
+							</>
+						) : (
+							<>
+								<Icon name="bell" size="md" color="warning" /> <Trans id="player.otherBuzzed">{buzzerWinner.player_name} hat gebuzzert!</Trans>
+							</>
+						)}
+					</BuzzerWinnerDisplay>
 				</Container>
 			);
 		}
@@ -226,7 +236,7 @@ export const AnswerInput: React.FC<AnswerInputProps> = ({ question, value, onCha
 	if (!question) {
 		return (
 			<Container>
-				<WaitingPlaceholder>⏳</WaitingPlaceholder>
+				<Icon name="clock" size="xl" color="neutral" />
 			</Container>
 		);
 	}
@@ -262,7 +272,13 @@ export const AnswerInput: React.FC<AnswerInputProps> = ({ question, value, onCha
 		<Container>
 			<InputWrapper>{renderInput()}</InputWrapper>
 			<SubmitButton onClick={onSubmit} disabled={isSubmitDisabled} variant={submitted ? 'success' : 'primary'}>
-				{submitted ? <Trans id="player.sentWithdraw">✓ Gesendet • Zurückziehen</Trans> : <Trans id="player.submit">Absenden</Trans>}
+				{submitted ? (
+					<>
+						<Icon name="check" size="xs" /> <Trans id="player.sentWithdraw">Gesendet • Zurückziehen</Trans>
+					</>
+				) : (
+					<Trans id="player.submit">Absenden</Trans>
+				)}
 			</SubmitButton>
 		</Container>
 	);

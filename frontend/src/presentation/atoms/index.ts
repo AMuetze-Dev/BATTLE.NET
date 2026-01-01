@@ -15,6 +15,9 @@ export type { ModalProps } from './Modal';
 
 export { ConnectionStatus } from './ConnectionStatus';
 
+export { Icon, IconButton } from './Icon';
+export type { IconProps, IconButtonProps, IconName, IconSize, IconColor } from './Icon';
+
 // Answer Input Components
 export { TextInput } from './TextInput';
 export type { TextInputProps } from './TextInput';
@@ -39,3 +42,17 @@ export type { HotspotInputProps } from './HotspotInput';
 
 export { SortingInput } from './SortingInput';
 export type { SortingInputProps } from './SortingInput';
+
+export { LeaderboardItem } from './LeaderboardItem';
+export type { LeaderboardItemProps } from './LeaderboardItem';
+
+export { ThemeSelector } from './ThemeSelector';
+export type { ThemeSelectorProps, ColorTheme, BrightnessMode, ThemeConfig } from './ThemeSelector';
+
+export { ImageLightbox } from './ImageLightbox';
+export type { ImageLightboxProps } from './ImageLightbox';
+
+export { ParticleBackground } from './ParticleBackground';
+
+export { ActionCard } from './ActionCard';
+export type { ActionCardProps } from './ActionCard';

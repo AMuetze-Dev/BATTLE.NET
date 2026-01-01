@@ -3,7 +3,7 @@
  */
 import React, { useRef, useState } from 'react';
 import styled from 'styled-components';
-import { Button } from '../atoms';
+import { Button, Icon } from '../atoms';
 import { colors, spacing, borderRadius, transitions } from '../../theme';
 
 export interface FileUploadProps {
@@ -182,7 +182,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
 	return (
 		<Container>
 			<DropZone isDragging={isDragging} hasFile={!!selectedFile} onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop} onClick={handleClick}>
-				<DropZoneIcon>{selectedFile ? '✅' : '📁'}</DropZoneIcon>
+				{selectedFile ? <Icon name="check-circle" size="xl" color="success" /> : <Icon name="folder" size="xl" color="primary" />}
 				<DropZoneText>{selectedFile ? 'File selected! Click to change or drag another file' : 'Click to select or drag and drop a file'}</DropZoneText>
 				<DropZoneHint>
 					Accepted: {accept} • Max size: {maxSize}MB

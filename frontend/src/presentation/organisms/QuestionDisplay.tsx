@@ -3,7 +3,7 @@
  */
 import React, { useState } from 'react';
 import styled from 'styled-components';
-import { Button, Input, Card } from '../atoms';
+import { Button, Input, Card, Icon } from '../atoms';
 import { colors, spacing, typography } from '../../theme';
 
 export interface Question {
@@ -297,7 +297,13 @@ export const QuestionDisplay: React.FC<QuestionDisplayProps> = ({ question, onSu
 					<OptionsList>
 						{question.options?.choices?.map((choice: string) => (
 							<Option key={choice} selected={selectedOptions.has(choice)} onClick={() => toggleOption(choice)} disabled={disabled}>
-								{selectedOptions.has(choice) ? '✓ ' : ''}
+								{selectedOptions.has(choice) ? (
+									<>
+										<Icon name="check" size="xs" />{' '}
+									</>
+								) : (
+									''
+								)}
 								{choice}
 							</Option>
 						))}
@@ -308,7 +314,15 @@ export const QuestionDisplay: React.FC<QuestionDisplayProps> = ({ question, onSu
 				return (
 					<div style={{ textAlign: 'center' }}>
 						<BuzzerButton pressed={buzzerPressed} onClick={handleBuzzerPress} disabled={disabled || buzzerPressed}>
-							{buzzerPressed ? '✓ BUZZED!' : '🔔 BUZZ'}
+							{buzzerPressed ? (
+								<>
+									<Icon name="check" size="xl" /> BUZZED!
+								</>
+							) : (
+								<>
+									<Icon name="bell" size="xl" /> BUZZ
+								</>
+							)}
 						</BuzzerButton>
 						{buzzerPressed && <Input value={answer || ''} onChange={(e) => setAnswer(e.target.value)} placeholder="Enter your answer..." disabled={disabled} fullWidth style={{ marginTop: spacing.lg }} />}
 					</div>
@@ -346,11 +360,17 @@ export const QuestionDisplay: React.FC<QuestionDisplayProps> = ({ question, onSu
 					<CategoryBadge difficulty={question.difficulty}>
 						{question.category} • Difficulty: {question.difficulty}/10
 					</CategoryBadge>
-					{timeRemaining !== undefined && <Timer warning={timeRemaining <= 10}>⏱️ {timeRemaining}s</Timer>}
+					{timeRemaining !== undefined && (
+						<Timer warning={timeRemaining <= 10}>
+							<Icon name="timer" size="md" /> {timeRemaining}s
+						</Timer>
+					)}
 				</Header>
 
 				<QuestionText>{question.text}</QuestionText>
-				<PointsDisplay>🎯 {question.points} points</PointsDisplay>
+				<PointsDisplay>
+					<Icon name="target" size="sm" color="primary" /> {question.points} points
+				</PointsDisplay>
 
 				<AnswerArea>
 					{renderAnswerInput()}

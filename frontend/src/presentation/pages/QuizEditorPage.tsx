@@ -11,6 +11,7 @@ import { Button } from '../atoms/Button';
 import { Input } from '../atoms/Input';
 import { Card } from '../atoms/Card';
 import { Modal } from '../atoms/Modal';
+import { Icon } from '../atoms/Icon';
 import { Layout } from '../organisms/Layout';
 import { api, QuizMetadata } from '../../services/api';
 import { colors, spacing } from '../../theme';
@@ -685,7 +686,7 @@ export const QuizEditorPage: React.FC = () => {
 
 					{catalog.questions.length === 0 ? (
 						<EmptyState>
-							<EmptyIcon>📝</EmptyIcon>
+							<Icon name="clipboard" size="2xl" color="neutral" />
 							<EmptyTitle>
 								<Trans id="quizEditor.noQuestionsYet">Noch keine Fragen</Trans>
 							</EmptyTitle>
@@ -719,13 +720,42 @@ export const QuizEditorPage: React.FC = () => {
 									<QuestionTextCell onClick={() => editQuestion(question)}>
 										<QuestionTextMain>{question.question || <Trans id="quizEditor.untitled">Ohne Titel</Trans>}</QuestionTextMain>
 										<QuestionTextSub>
-											{question.type === 'multiple-choice' && question.answers.length > 0 && `✓ ${question.answers.find((a) => a.isCorrect)?.text || 'Nicht festgelegt'}`}
-											{question.type === 'true-false' && `✓ ${question.correctAnswer === 1 ? 'Wahr' : 'Falsch'}`}
-											{(question.type === 'text' || question.type === 'buzzer') && question.correctAnswerText && `✓ ${question.correctAnswerText}`}
-											{question.type === 'slider' && `✓ ${question.sliderCorrectValue}${question.sliderUnit ? ` ${question.sliderUnit}` : ''} (${question.sliderMin}-${question.sliderMax})`}
-											{question.type === 'hotspot' && (question.imageData || question.imageUrl) && `✓ Markierung bei ${question.hotspotX?.toFixed(0)}%, ${question.hotspotY?.toFixed(0)}%`}
-											{question.type === 'hotspot' && !(question.imageData || question.imageUrl) && '⚠ Bild erforderlich'}
-											{question.type === 'sorting' && question.sortingItems && `✓ ${question.sortingItems.length} Elemente`}
+											{question.type === 'multiple-choice' && question.answers.length > 0 && (
+												<>
+													<Icon name="check" size="xs" color="success" /> {question.answers.find((a) => a.isCorrect)?.text || 'Nicht festgelegt'}
+												</>
+											)}
+											{question.type === 'true-false' && (
+												<>
+													<Icon name="check" size="xs" color="success" /> {question.correctAnswer === 1 ? 'Wahr' : 'Falsch'}
+												</>
+											)}
+											{(question.type === 'text' || question.type === 'buzzer') && question.correctAnswerText && (
+												<>
+													<Icon name="check" size="xs" color="success" /> {question.correctAnswerText}
+												</>
+											)}
+											{question.type === 'slider' && (
+												<>
+													<Icon name="check" size="xs" color="success" /> {question.sliderCorrectValue}
+													{question.sliderUnit ? ` ${question.sliderUnit}` : ''} ({question.sliderMin}-{question.sliderMax})
+												</>
+											)}
+											{question.type === 'hotspot' && (question.imageData || question.imageUrl) && (
+												<>
+													<Icon name="check" size="xs" color="success" /> Markierung bei {question.hotspotX?.toFixed(0)}%, {question.hotspotY?.toFixed(0)}%
+												</>
+											)}
+											{question.type === 'hotspot' && !(question.imageData || question.imageUrl) && (
+												<>
+													<Icon name="alert-triangle" size="xs" color="warning" /> Bild erforderlich
+												</>
+											)}
+											{question.type === 'sorting' && question.sortingItems && (
+												<>
+													<Icon name="check" size="xs" color="success" /> {question.sortingItems.length} Elemente
+												</>
+											)}
 										</QuestionTextSub>
 									</QuestionTextCell>
 
@@ -850,7 +880,15 @@ export const QuizEditorPage: React.FC = () => {
 								{editingQuestion.answers.map((answer, index) => (
 									<AnswerRow key={answer.id} isCorrect={answer.isCorrect}>
 										<CorrectRadio type="radio" name="correctAnswer" checked={answer.isCorrect} onChange={() => setCorrectAnswer(index)} title="Als korrekte Antwort markieren" />
-										<CorrectLabel isCorrect={answer.isCorrect}>{answer.isCorrect ? <Trans id="quizEditor.markedCorrect">✓ Korrekt</Trans> : <Trans id="quizEditor.answerNumber">Antwort {index + 1}</Trans>}</CorrectLabel>
+										<CorrectLabel isCorrect={answer.isCorrect}>
+											{answer.isCorrect ? (
+												<>
+													<Icon name="check" size="xs" color="success" /> <Trans id="quizEditor.markedCorrect">Korrekt</Trans>
+												</>
+											) : (
+												<Trans id="quizEditor.answerNumber">Antwort {index + 1}</Trans>
+											)}
+										</CorrectLabel>
 										<Input value={answer.text} onChange={(e) => updateAnswer(index, e.target.value)} placeholder={`Antwort ${index + 1}`} fullWidth />
 									</AnswerRow>
 								))}

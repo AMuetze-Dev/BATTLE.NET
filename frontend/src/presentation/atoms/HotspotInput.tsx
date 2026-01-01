@@ -7,6 +7,7 @@ import React, { useState, useRef, useCallback, useEffect } from 'react';
 import styled from 'styled-components';
 import { Trans } from '@lingui/react/macro';
 import { colors, spacing, typography, borderRadius } from '../../theme';
+import { Icon } from './Icon';
 
 export interface HotspotInputProps {
 	/** Current value as "x,y" coordinates (percentage-based 0-100) */
@@ -275,17 +276,25 @@ export const HotspotInput: React.FC<HotspotInputProps> = ({ value, onChange, ima
 				{allowZoom && (
 					<>
 						<ZoomButton onClick={handleZoomOut} disabled={scale <= 1 || locked} title="Verkleinern">
-							➖
+							<Icon name="minus" size="sm" />
 						</ZoomButton>
 						<ZoomButton onClick={handleResetZoom} disabled={scale === 1 || locked} $active={scale === 1} title="Zurücksetzen">
-							🔄
+							<Icon name="refresh" size="sm" />
 						</ZoomButton>
 						<ZoomButton onClick={handleZoomIn} disabled={scale >= 3 || locked} title="Vergrößern">
-							➕
+							<Icon name="plus" size="sm" />
 						</ZoomButton>
 					</>
 				)}
-				<CoordinateDisplay $hasValue={!!markerPosition}>{markerPosition ? `📍 ${markerPosition.x.toFixed(1)}%, ${markerPosition.y.toFixed(1)}%` : <Trans id="hotspot.noMarker">Kein Marker gesetzt</Trans>}</CoordinateDisplay>
+				<CoordinateDisplay $hasValue={!!markerPosition}>
+					{markerPosition ? (
+						<>
+							<Icon name="map-pin" size="xs" /> {markerPosition.x.toFixed(1)}%, {markerPosition.y.toFixed(1)}%
+						</>
+					) : (
+						<Trans id="hotspot.noMarker">Kein Marker gesetzt</Trans>
+					)}
+				</CoordinateDisplay>
 			</Controls>
 
 			{!locked && <HintText>{isZoomed ? <Trans id="hotspot.hintZoomed">Ziehen zum Verschieben, Klicken zum Markieren</Trans> : <Trans id="hotspot.hint">Klicke auf das Bild, um einen Punkt zu markieren</Trans>}</HintText>}

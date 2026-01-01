@@ -5,6 +5,7 @@ import React from 'react';
 import styled from 'styled-components';
 import { Trans } from '@lingui/react/macro';
 import { colors, spacing, typography, borderRadius } from '../../theme';
+import { Icon } from './Icon';
 
 export interface TrueFalseInputProps {
 	value: string;
@@ -58,19 +59,15 @@ const OptionButton = styled.button<{ $selected: boolean; $isTrue: boolean; $lock
 	}
 `;
 
-const Icon = styled.span`
-	font-size: ${typography.fontSize['2xl']};
-`;
-
 export const TrueFalseInput: React.FC<TrueFalseInputProps> = ({ value, onChange, locked = false }) => {
 	return (
 		<Container>
 			<OptionButton type="button" $selected={value === 'true'} $isTrue={true} $locked={locked} disabled={locked} onClick={() => onChange('true')} aria-pressed={value === 'true'}>
-				<Icon>✓</Icon>
+				<Icon name="check" size="lg" />
 				<Trans id="input.trueOption">Wahr</Trans>
 			</OptionButton>
 			<OptionButton type="button" $selected={value === 'false'} $isTrue={false} $locked={locked} disabled={locked} onClick={() => onChange('false')} aria-pressed={value === 'false'}>
-				<Icon>✗</Icon>
+				<Icon name="x" size="lg" />
 				<Trans id="input.falseOption">Falsch</Trans>
 			</OptionButton>
 		</Container>

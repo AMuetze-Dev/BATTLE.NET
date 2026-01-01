@@ -1,0 +1,83 @@
+/* ModeratorSessionHeader Organism Styles - Battle.Net Quiz Platform */
+
+.header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: var(--spacing-md) var(--spacing-lg);
+	background: var(--gradient-primary);
+	color: var(--color-text-inverse);
+	border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0;
+	flex-wrap: wrap;
+	gap: var(--spacing-md);
+}
+
+.sessionCode {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+}
+
+.codeLabel {
+	font-size: 0.75rem;
+	text-transform: uppercase;
+	opacity: 0.8;
+	font-weight: var(--font-weight-medium);
+}
+
+.codeValue {
+	font-size: 1.75rem;
+	font-weight: var(--font-weight-bold);
+	letter-spacing: 0.15em;
+	font-family: var(--font-family-mono);
+}
+
+.stats {
+	display: flex;
+	gap: var(--spacing-xl);
+}
+
+.statItem {
+	text-align: center;
+}
+
+.statValue {
+	font-size: 1.5rem;
+	font-weight: var(--font-weight-bold);
+}
+
+.statLabel {
+	font-size: 0.75rem;
+	text-transform: uppercase;
+	opacity: 0.8;
+}
+
+.actions {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-md);
+}
+
+.exitButton {
+	color: white !important;
+	border-color: rgba(255, 255, 255, 0.5) !important;
+}
+
+.exitButton:hover {
+	background: rgba(255, 255, 255, 0.1) !important;
+}
+
+@media (max-width: 768px) {
+	.header {
+		flex-direction: column;
+		text-align: center;
+	}
+
+	.sessionCode {
+		align-items: center;
+	}
+
+	.stats {
+		justify-content: center;
+	}
+}

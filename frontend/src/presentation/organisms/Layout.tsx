@@ -15,12 +15,12 @@ const LayoutContainer = styled.div`
 	display: flex;
 	flex-direction: column;
 	min-height: 100vh;
-	background: ${colors.surface};
+	background: var(--color-bg, #fafafa);
 `;
 
 const Header = styled.header`
-	background: ${colors.background};
-	border-bottom: 1px solid ${colors.border.light};
+	background: var(--color-surface, #fff);
+	border-bottom: 1px solid var(--color-border, #e4e4e7);
 	padding: ${spacing.lg} ${spacing.xl};
 	position: sticky;
 	top: 0;
@@ -36,11 +36,11 @@ const Main = styled.main`
 `;
 
 const Footer = styled.footer`
-	background: ${colors.background};
-	border-top: 1px solid ${colors.border.light};
+	background: var(--color-surface, #fff);
+	border-top: 1px solid var(--color-border, #e4e4e7);
 	padding: ${spacing.lg} ${spacing.xl};
 	text-align: center;
-	color: ${colors.text.secondary};
+	color: var(--color-text-secondary, #52525b);
 	font-size: 14px;
 `;
 

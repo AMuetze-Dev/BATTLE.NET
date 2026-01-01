@@ -1,0 +1,898 @@
+/**
+ * Battle.Net Quiz Platform - Component Design System
+ * 
+ * Centralized styles for all UI components
+ * Ensures consistency, accessibility, and brand compliance
+ * 
+ * Structure:
+ * 1. Button System
+ * 2. Input System  
+ * 3. Card System
+ * 4. Badge System
+ * 5. Icon System
+ * 6. Control Elements (Timer, Score, etc.)
+ */
+
+/* ==================== 1. BUTTON SYSTEM ==================== */
+
+/**
+ * Button Base
+ * All buttons inherit these properties
+ */
+.btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: var(--spacing-2);
+	font-family: var(--font-family-sans);
+	font-weight: var(--font-weight-medium);
+	text-align: center;
+	white-space: nowrap;
+	vertical-align: middle;
+	user-select: none;
+	border: var(--border-width-medium) solid transparent;
+	border-radius: var(--border-radius-md);
+	cursor: pointer;
+	transition: 
+		background-color var(--transition-fast),
+		border-color var(--transition-fast),
+		color var(--transition-fast),
+		box-shadow var(--transition-fast),
+		transform var(--transition-fast);
+}
+
+.btn:focus-visible {
+	outline: none;
+	box-shadow: 0 0 0 3px var(--color-focus-ring);
+}
+
+.btn:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+	pointer-events: none;
+}
+
+/* Button Sizes */
+.btn-xs {
+	padding: var(--spacing-1) var(--spacing-2);
+	font-size: var(--font-size-xs);
+	height: 24px;
+	min-width: 24px;
+}
+
+.btn-sm {
+	padding: var(--spacing-1) var(--spacing-3);
+	font-size: var(--font-size-sm);
+	height: 32px;
+	min-width: 32px;
+}
+
+.btn-md {
+	padding: var(--spacing-2) var(--spacing-4);
+	font-size: var(--font-size-base);
+	height: 40px;
+	min-width: 40px;
+}
+
+.btn-lg {
+	padding: var(--spacing-3) var(--spacing-6);
+	font-size: var(--font-size-lg);
+	height: 48px;
+	min-width: 48px;
+}
+
+/* Button Variants - Primary (Brand Blue) */
+.btn-primary {
+	background-color: var(--color-primary-600);
+	border-color: var(--color-primary-600);
+	color: var(--color-text-inverse);
+}
+
+.btn-primary:hover:not(:disabled) {
+	background-color: var(--color-primary-700);
+	border-color: var(--color-primary-700);
+	box-shadow: var(--shadow-sm);
+}
+
+.btn-primary:active:not(:disabled) {
+	background-color: var(--color-primary-800);
+	border-color: var(--color-primary-800);
+	transform: translateY(1px);
+}
+
+/* Button Variants - Secondary (Outline) */
+.btn-secondary,
+.btn-outline {
+	background-color: transparent;
+	border-color: var(--color-primary-600);
+	color: var(--color-primary-600);
+}
+
+.btn-secondary:hover:not(:disabled),
+.btn-outline:hover:not(:disabled) {
+	background-color: var(--color-primary-bg);
+	border-color: var(--color-primary-700);
+	color: var(--color-primary-700);
+}
+
+.btn-secondary:active:not(:disabled),
+.btn-outline:active:not(:disabled) {
+	background-color: var(--color-primary-bg);
+	opacity: 0.9;
+}
+
+/* Button Variants - Ghost (No Border) */
+.btn-ghost {
+	background-color: transparent;
+	border-color: transparent;
+	color: var(--color-text-secondary);
+}
+
+.btn-ghost:hover:not(:disabled) {
+	background-color: var(--color-hover-overlay);
+	color: var(--color-text-primary);
+}
+
+.btn-ghost:active:not(:disabled) {
+	background-color: var(--color-active-overlay);
+}
+
+/* Button Variants - Danger (Red - Errors/Disconnect only) */
+.btn-danger {
+	background-color: var(--color-error-600);
+	border-color: var(--color-error-600);
+	color: var(--color-text-inverse);
+}
+
+.btn-danger:hover:not(:disabled) {
+	background-color: var(--color-error-700);
+	border-color: var(--color-error-700);
+	box-shadow: var(--shadow-sm);
+}
+
+.btn-danger:active:not(:disabled) {
+	background-color: var(--color-error-800);
+	border-color: var(--color-error-800);
+}
+
+/* Button Variants - Success (Green) */
+.btn-success {
+	background-color: var(--color-success-600);
+	border-color: var(--color-success-600);
+	color: var(--color-text-inverse);
+}
+
+.btn-success:hover:not(:disabled) {
+	background-color: var(--color-success-700);
+	border-color: var(--color-success-700);
+	box-shadow: var(--shadow-sm);
+}
+
+.btn-success:active:not(:disabled) {
+	background-color: var(--color-success-800);
+	border-color: var(--color-success-800);
+}
+
+/* Button Modifiers */
+.btn-full-width {
+	width: 100%;
+}
+
+.btn-icon-only {
+	padding: var(--spacing-2);
+	aspect-ratio: 1;
+}
+
+.btn-rounded {
+	border-radius: var(--border-radius-full);
+}
+
+/* Button Loading State */
+.btn-loading {
+	position: relative;
+	color: transparent !important;
+	pointer-events: none;
+}
+
+.btn-loading::after {
+	content: '';
+	position: absolute;
+	width: 16px;
+	height: 16px;
+	border: 2px solid currentColor;
+	border-right-color: transparent;
+	border-radius: 50%;
+	animation: spin 0.75s linear infinite;
+}
+
+/* ==================== 2. INPUT SYSTEM ==================== */
+
+/**
+ * Input Base
+ * Text inputs, selects, textareas
+ */
+.input {
+	display: block;
+	width: 100%;
+	padding: var(--spacing-2) var(--spacing-3);
+	font-family: var(--font-family-sans);
+	font-size: var(--font-size-base);
+	font-weight: var(--font-weight-normal);
+	line-height: var(--line-height-normal);
+	color: var(--color-text-primary);
+	background-color: var(--color-input-bg);
+	border: var(--border-width-thin) solid var(--color-input-border);
+	border-radius: var(--border-radius-md);
+	transition: 
+		border-color var(--transition-fast),
+		box-shadow var(--transition-fast);
+}
+
+.input::placeholder {
+	color: var(--color-input-placeholder);
+}
+
+.input:hover:not(:disabled) {
+	border-color: var(--color-border-hover);
+}
+
+.input:focus {
+	outline: none;
+	border-color: var(--color-border-focus);
+	box-shadow: 0 0 0 3px var(--color-focus-ring);
+}
+
+.input:disabled {
+	background-color: var(--color-bg-sunken);
+	color: var(--color-text-disabled);
+	cursor: not-allowed;
+}
+
+/* Input Sizes */
+.input-sm {
+	padding: var(--spacing-1) var(--spacing-2);
+	font-size: var(--font-size-sm);
+	height: 32px;
+}
+
+.input-lg {
+	padding: var(--spacing-3) var(--spacing-4);
+	font-size: var(--font-size-lg);
+	height: 48px;
+}
+
+/* Input States */
+.input-error {
+	border-color: var(--color-error-500);
+}
+
+.input-error:focus {
+	box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.3);
+}
+
+.input-success {
+	border-color: var(--color-success-500);
+}
+
+/* Input with Icon */
+.input-group {
+	position: relative;
+	display: flex;
+	align-items: center;
+}
+
+.input-group .input {
+	padding-left: var(--spacing-10);
+}
+
+.input-group .input-icon {
+	position: absolute;
+	left: var(--spacing-3);
+	color: var(--color-text-tertiary);
+	pointer-events: none;
+}
+
+/* ==================== 3. CARD SYSTEM ==================== */
+
+.card {
+	background-color: var(--color-card-bg);
+	border: var(--border-width-thin) solid var(--color-card-border);
+	border-radius: var(--border-radius-lg);
+	box-shadow: var(--shadow-sm);
+	overflow: hidden;
+}
+
+.card-header {
+	padding: var(--spacing-4);
+	border-bottom: var(--border-width-thin) solid var(--color-border);
+	background-color: var(--color-bg-sunken);
+}
+
+.card-body {
+	padding: var(--spacing-4);
+}
+
+.card-footer {
+	padding: var(--spacing-4);
+	border-top: var(--border-width-thin) solid var(--color-border);
+	background-color: var(--color-bg-sunken);
+}
+
+/* Card Variants */
+.card-elevated {
+	box-shadow: var(--shadow-md);
+}
+
+.card-interactive {
+	cursor: pointer;
+	transition: 
+		box-shadow var(--transition-fast),
+		transform var(--transition-fast);
+}
+
+.card-interactive:hover {
+	box-shadow: var(--shadow-lg);
+	transform: translateY(-2px);
+}
+
+/* ==================== 4. BADGE SYSTEM ==================== */
+
+.badge {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: var(--spacing-1);
+	padding: var(--spacing-1) var(--spacing-2);
+	font-size: var(--font-size-xs);
+	font-weight: var(--font-weight-medium);
+	line-height: 1;
+	border-radius: var(--border-radius-full);
+	white-space: nowrap;
+}
+
+/* Badge Variants - Uses only brand colors */
+.badge-primary {
+	background-color: var(--color-primary-bg);
+	color: var(--color-primary-600);
+}
+
+.badge-success {
+	background-color: var(--color-success-100);
+	color: var(--color-success-700);
+}
+
+[data-theme="dark"] .badge-success {
+	background-color: rgba(34, 197, 94, 0.2);
+	color: var(--color-success-300);
+}
+
+.badge-warning {
+	background-color: var(--color-warning-100);
+	color: var(--color-warning-700);
+}
+
+[data-theme="dark"] .badge-warning {
+	background-color: rgba(245, 158, 11, 0.2);
+	color: var(--color-warning-300);
+}
+
+.badge-error {
+	background-color: var(--color-error-100);
+	color: var(--color-error-700);
+}
+
+[data-theme="dark"] .badge-error {
+	background-color: rgba(239, 68, 68, 0.2);
+	color: var(--color-error-300);
+}
+
+.badge-neutral {
+	background-color: var(--color-neutral-200);
+	color: var(--color-neutral-700);
+}
+
+[data-theme="dark"] .badge-neutral {
+	background-color: rgba(100, 116, 139, 0.2);
+	color: var(--color-text-secondary);
+}
+
+/* Solid Badge Variants */
+.badge-primary-solid {
+	background-color: var(--color-primary-600);
+	color: var(--color-text-inverse);
+}
+
+.badge-success-solid {
+	background-color: var(--color-success-600);
+	color: var(--color-text-inverse);
+}
+
+.badge-error-solid {
+	background-color: var(--color-error-600);
+	color: var(--color-text-inverse);
+}
+
+/* Light/Inverse Badge Variants (for dark/blue backgrounds) */
+.badge-light {
+	background-color: rgba(255, 255, 255, 0.2);
+	color: #ffffff;
+}
+
+.badge-light-success {
+	background-color: rgba(34, 197, 94, 0.3);
+	color: #ffffff;
+}
+
+.badge-light-error {
+	background-color: rgba(239, 68, 68, 0.3);
+	color: #ffffff;
+}
+
+/* ==================== 5. ICON SYSTEM ==================== */
+
+/**
+ * Icons use ONLY brand colors via CSS variables
+ * Icons inherit color from parent by default (currentColor)
+ * Use .icon-* classes to explicitly set icon colors
+ */
+.icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+	width: 1em;
+	height: 1em;
+	font-size: inherit;
+	color: currentColor;
+	line-height: 1;
+}
+
+/* Icon Sizes */
+.icon-xs { font-size: 12px; }
+.icon-sm { font-size: 16px; }
+.icon-md { font-size: 20px; }
+.icon-lg { font-size: 24px; }
+.icon-xl { font-size: 32px; }
+.icon-2xl { font-size: 48px; }
+
+/* Icon Colors - Brand Palette ONLY */
+.icon-primary { color: var(--color-primary-600); }
+.icon-primary-light { color: var(--color-primary-400); }
+.icon-primary-dark { color: var(--color-primary-800); }
+
+.icon-success { color: var(--color-success-600); }
+.icon-success-light { color: var(--color-success-400); }
+
+.icon-warning { color: var(--color-warning-600); }
+.icon-warning-light { color: var(--color-warning-400); }
+
+.icon-error { color: var(--color-error-600); }
+.icon-error-light { color: var(--color-error-400); }
+
+.icon-neutral { color: var(--color-neutral-500); }
+.icon-muted { color: var(--color-text-tertiary); }
+.icon-inverse { color: var(--color-text-inverse); }
+
+/* Icon in Button - automatic sizing */
+.btn .icon {
+	font-size: 1.25em;
+}
+
+/* ==================== 6. CONTROL ELEMENTS ==================== */
+
+/**
+ * Timer Display
+ */
+.timer-display {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	padding: var(--spacing-1) var(--spacing-3);
+	font-family: var(--font-family-mono);
+	font-size: var(--font-size-lg);
+	font-weight: var(--font-weight-bold);
+	color: var(--color-primary-600);
+	background-color: var(--color-primary-bg);
+	border-radius: var(--border-radius-md);
+	min-width: 60px;
+	transition: background-color var(--transition-normal), color var(--transition-normal);
+}
+
+/**
+ * Score Display
+ */
+.score-display {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	padding: var(--spacing-1) var(--spacing-2);
+	font-family: var(--font-family-mono);
+	font-size: var(--font-size-xl);
+	font-weight: var(--font-weight-bold);
+	color: var(--color-primary-600);
+	min-width: 40px;
+}
+
+/**
+ * Counter Controls (e.g., timer +/- buttons)
+ */
+.counter-control {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--spacing-1);
+}
+
+.counter-btn {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 28px;
+	height: 28px;
+	font-size: var(--font-size-lg);
+	font-weight: var(--font-weight-bold);
+	color: var(--color-text-secondary);
+	background-color: var(--color-surface);
+	border: var(--border-width-thin) solid var(--color-border);
+	border-radius: var(--border-radius-md);
+	cursor: pointer;
+	transition: all var(--transition-fast);
+}
+
+.counter-btn:hover {
+	background-color: var(--color-primary-bg);
+	border-color: var(--color-primary-border);
+	color: var(--color-primary-600);
+}
+
+.counter-btn:active {
+	background-color: var(--color-primary-bg);
+	opacity: 0.9;
+	transform: scale(0.95);
+}
+
+/**
+ * Score Control Buttons (add/subtract points)
+ */
+.score-btn {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 24px;
+	height: 24px;
+	font-size: var(--font-size-sm);
+	font-weight: var(--font-weight-bold);
+	border-radius: var(--border-radius-full);
+	border: none;
+	cursor: pointer;
+	transition: all var(--transition-fast);
+}
+
+.score-btn-add {
+	background-color: var(--color-success-100);
+	color: var(--color-success-700);
+}
+
+[data-theme="dark"] .score-btn-add {
+	background-color: rgba(34, 197, 94, 0.2);
+	color: var(--color-success-300);
+}
+
+.score-btn-add:hover {
+	background-color: var(--color-success-500);
+	color: var(--color-text-inverse);
+}
+
+.score-btn-subtract {
+	background-color: var(--color-error-100);
+	color: var(--color-error-700);
+}
+
+[data-theme="dark"] .score-btn-subtract {
+	background-color: rgba(239, 68, 68, 0.2);
+	color: var(--color-error-300);
+}
+
+.score-btn-subtract:hover {
+	background-color: var(--color-error-500);
+	color: var(--color-text-inverse);
+}
+
+/**
+ * Connection Status Indicator
+ */
+.connection-dot {
+	display: inline-block;
+	width: 10px;
+	height: 10px;
+	border-radius: var(--border-radius-full);
+	flex-shrink: 0;
+}
+
+.connection-dot-connected {
+	background-color: var(--color-success-500);
+	box-shadow: 0 0 6px var(--color-success-400);
+}
+
+.connection-dot-disconnected {
+	background-color: var(--color-error-500);
+	box-shadow: 0 0 6px var(--color-error-400);
+}
+
+.connection-dot-pending {
+	background-color: var(--color-warning-500);
+	animation: pulse 2s infinite;
+}
+
+/**
+ * Question Type Tags
+ */
+.question-tag {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--spacing-1);
+	padding: var(--spacing-1) var(--spacing-2);
+	font-size: var(--font-size-xs);
+	font-weight: var(--font-weight-medium);
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+	border-radius: var(--border-radius-sm);
+	background-color: var(--color-neutral-100);
+	color: var(--color-neutral-700);
+	transition: background-color var(--transition-normal), color var(--transition-normal);
+}
+
+[data-theme="dark"] .question-tag {
+	background-color: rgba(100, 116, 139, 0.2);
+	color: var(--color-text-secondary);
+}
+
+/* Question type specific colors - brand palette only */
+.question-tag-multiple-choice { 
+	background-color: var(--color-primary-bg); 
+	color: var(--color-primary-600); 
+}
+
+.question-tag-true-false { 
+	background-color: var(--color-success-100); 
+	color: var(--color-success-700); 
+}
+
+[data-theme="dark"] .question-tag-true-false {
+	background-color: rgba(34, 197, 94, 0.2);
+	color: var(--color-success-300);
+}
+
+.question-tag-slider { 
+	background-color: var(--color-warning-100); 
+	color: var(--color-warning-700); 
+}
+
+[data-theme="dark"] .question-tag-slider {
+	background-color: rgba(245, 158, 11, 0.2);
+	color: var(--color-warning-300);
+}
+
+.question-tag-hotspot { 
+	background-color: var(--color-warning-100); 
+	color: var(--color-warning-700); 
+}
+
+[data-theme="dark"] .question-tag-hotspot {
+	background-color: rgba(245, 158, 11, 0.2);
+	color: var(--color-warning-300);
+}
+
+.question-tag-sorting { 
+	background-color: var(--color-secondary-100); 
+	color: var(--color-secondary-700); 
+}
+
+[data-theme="dark"] .question-tag-sorting {
+	background-color: rgba(139, 92, 246, 0.2);
+	color: #c4b5fd;
+}
+
+.question-tag-buzzer { 
+	background-color: var(--color-error-100); 
+	color: var(--color-error-700); 
+}
+
+[data-theme="dark"] .question-tag-buzzer {
+	background-color: rgba(239, 68, 68, 0.2);
+	color: var(--color-error-300);
+}
+
+/**
+ * Progress Indicator
+ */
+.progress {
+	display: flex;
+	height: 8px;
+	overflow: hidden;
+	background-color: var(--color-neutral-200);
+	border-radius: var(--border-radius-full);
+	transition: background-color var(--transition-normal);
+}
+
+[data-theme="dark"] .progress {
+	background-color: rgba(100, 116, 139, 0.3);
+}
+
+.progress-bar {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	background-color: var(--color-primary-500);
+	transition: width var(--transition-base);
+}
+
+.progress-success .progress-bar {
+	background-color: var(--color-success-500);
+}
+
+.progress-warning .progress-bar {
+	background-color: var(--color-warning-500);
+}
+
+.progress-error .progress-bar {
+	background-color: var(--color-error-500);
+}
+
+/**
+ * Rank Badge (Leaderboard)
+ */
+.rank-badge {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 24px;
+	height: 24px;
+	font-size: var(--font-size-sm);
+	font-weight: var(--font-weight-bold);
+	border-radius: var(--border-radius-full);
+	background-color: var(--color-neutral-200);
+	color: var(--color-neutral-600);
+	transition: background-color var(--transition-normal), color var(--transition-normal);
+}
+
+[data-theme="dark"] .rank-badge {
+	background-color: rgba(100, 116, 139, 0.3);
+	color: var(--color-text-secondary);
+}
+
+.rank-badge-1 {
+	background-color: var(--color-warning-400);
+	color: var(--color-warning-900);
+}
+
+.rank-badge-2 {
+	background-color: var(--color-neutral-300);
+	color: var(--color-neutral-700);
+}
+
+.rank-badge-3 {
+	background-color: var(--color-warning-600);
+	color: var(--color-text-inverse);
+}
+
+/* ==================== SPIN ANIMATION (for loading) ==================== */
+@keyframes spin {
+	from { transform: rotate(0deg); }
+	to { transform: rotate(360deg); }
+}
+
+/* ==================== 7. MODAL SYSTEM ==================== */
+
+@keyframes modal-fade-in {
+	from { opacity: 0; }
+	to { opacity: 1; }
+}
+
+@keyframes modal-slide-up {
+	from {
+		transform: translateY(20px);
+		opacity: 0;
+	}
+	to {
+		transform: translateY(0);
+		opacity: 1;
+	}
+}
+
+/**
+ * Modal Overlay
+ */
+.modal-overlay {
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background-color: var(--color-overlay);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	z-index: var(--z-index-modal-backdrop);
+	padding: var(--spacing-4);
+	animation: modal-fade-in var(--transition-fast);
+}
+
+/**
+ * Modal Content Container
+ */
+.modal-content {
+	background-color: var(--color-surface);
+	border-radius: var(--border-radius-xl);
+	box-shadow: var(--shadow-2xl);
+	width: 100%;
+	max-height: 90vh;
+	overflow: hidden;
+	display: flex;
+	flex-direction: column;
+	animation: modal-slide-up var(--transition-normal);
+	z-index: var(--z-index-modal);
+	border: 1px solid var(--color-border);
+}
+
+/**
+ * Modal Header
+ */
+.modal-header {
+	padding: var(--spacing-4);
+	border-bottom: 1px solid var(--color-border-light);
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.modal-title {
+	margin: 0;
+	font-size: var(--font-size-xl);
+	font-weight: var(--font-weight-semibold);
+	color: var(--color-text-primary);
+}
+
+.modal-close {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 32px;
+	height: 32px;
+	background-color: transparent;
+	border: none;
+	color: var(--color-text-secondary);
+	cursor: pointer;
+	border-radius: var(--border-radius-md);
+	transition: all var(--transition-fast);
+}
+
+.modal-close:hover {
+	background-color: var(--color-hover);
+	color: var(--color-text-primary);
+}
+
+.modal-close:focus-visible {
+	outline: none;
+	box-shadow: 0 0 0 3px var(--color-focus-ring);
+}
+
+/**
+ * Modal Body
+ */
+.modal-body {
+	padding: var(--spacing-4);
+	overflow-y: auto;
+	flex: 1;
+}
+
+/**
+ * Modal Footer (optional)
+ */
+.modal-footer {
+	padding: var(--spacing-4);
+	border-top: 1px solid var(--color-border-light);
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+	gap: var(--spacing-3);
+}

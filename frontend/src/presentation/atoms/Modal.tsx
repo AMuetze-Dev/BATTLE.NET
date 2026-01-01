@@ -1,133 +1,41 @@
 /**
- * Modal component - Accessible overlay dialog with focus trap
+ * Modal Component - Battle.Net Quiz Platform
+ *
+ * Accessible overlay dialog with focus trap.
+ * Uses centralized CSS classes from components.css.
  */
 import React, { useEffect } from 'react';
-import styled, { css, keyframes } from 'styled-components';
-import { colors, borderRadius, shadows, spacing, zIndex, transitions } from '../../theme';
+import { Icon } from './Icon';
 
 export interface ModalProps {
+	/** Whether the modal is open */
 	isOpen: boolean;
+	/** Callback to close the modal */
 	onClose: () => void;
+	/** Modal title */
 	title?: string;
+	/** Modal content */
 	children: React.ReactNode;
+	/** Modal size */
 	size?: 'sm' | 'md' | 'lg' | 'xl';
+	/** Custom max width */
 	maxWidth?: string;
+	/** Close on overlay click */
 	closeOnOverlayClick?: boolean;
+	/** Show close button */
 	showCloseButton?: boolean;
 }
 
-const fadeIn = keyframes`
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-`;
-
-const slideUp = keyframes`
-  from {
-    transform: translateY(20px);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
-`;
-
-const Overlay = styled.div<{ isOpen: boolean }>`
-	position: fixed;
-	top: 0;
-	left: 0;
-	right: 0;
-	bottom: 0;
-	background: ${colors.overlay};
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	z-index: ${zIndex.modalBackdrop};
-	animation: ${fadeIn} ${transitions.fast};
-	padding: ${spacing.lg};
-
-	${({ isOpen }) =>
-		!isOpen &&
-		css`
-			display: none;
-		`}
-`;
-
-const sizeStyles = {
-	sm: css`
-		max-width: 400px;
-	`,
-	md: css`
-		max-width: 600px;
-	`,
-	lg: css`
-		max-width: 800px;
-	`,
-	xl: css`
-		max-width: 1200px;
-	`,
+const sizeMap: Record<string, string> = {
+	sm: '400px',
+	md: '600px',
+	lg: '800px',
+	xl: '1200px',
 };
 
-const ModalContent = styled.div<{ size?: 'sm' | 'md' | 'lg' | 'xl'; maxWidth?: string }>`
-	background: ${colors.background};
-	border-radius: ${borderRadius.xl};
-	box-shadow: ${shadows['2xl']};
-	width: 100%;
-	max-height: 90vh;
-	overflow: hidden;
-	display: flex;
-	flex-direction: column;
-	animation: ${slideUp} ${transitions.normal};
-	z-index: ${zIndex.modal};
-	${({ size }) => size && sizeStyles[size]}
-	${({ maxWidth }) =>
-		maxWidth &&
-		css`
-			max-width: ${maxWidth};
-		`}
-`;
-
-const ModalHeader = styled.div`
-	padding: ${spacing.lg};
-	border-bottom: 1px solid ${colors.border.light};
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-`;
-
-const ModalTitle = styled.h2`
-	margin: 0;
-	font-size: 20px;
-	font-weight: 600;
-	color: ${colors.text.primary};
-`;
-
-const CloseButton = styled.button`
-	background: transparent;
-	border: none;
-	font-size: 24px;
-	color: ${colors.text.secondary};
-	cursor: pointer;
-	padding: ${spacing.xs};
-	border-radius: ${borderRadius.sm};
-	transition: all ${transitions.fast};
-
-	&:hover {
-		background: ${colors.hover};
-		color: ${colors.text.primary};
-	}
-`;
-
-const ModalBody = styled.div`
-	padding: ${spacing.lg};
-	overflow-y: auto;
-	flex: 1;
-`;
-
+/**
+ * Modal - Accessible overlay dialog
+ */
 export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, size = 'md', maxWidth, closeOnOverlayClick = true, showCloseButton = true }) => {
 	useEffect(() => {
 		const handleEscape = (e: KeyboardEvent) => {
@@ -153,21 +61,29 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, 
 
 	if (!isOpen) return null;
 
+	const contentStyle: React.CSSProperties = {
+		maxWidth: maxWidth || sizeMap[size] || sizeMap.md,
+	};
+
 	return (
-		<Overlay isOpen={isOpen} onClick={() => closeOnOverlayClick && onClose()}>
-			<ModalContent size={size} maxWidth={maxWidth} onClick={(e) => e.stopPropagation()}>
+		<div className="modal-overlay" onClick={() => closeOnOverlayClick && onClose()} role="dialog" aria-modal="true" aria-labelledby={title ? 'modal-title' : undefined}>
+			<div className="modal-content" style={contentStyle} onClick={(e) => e.stopPropagation()}>
 				{(title || showCloseButton) && (
-					<ModalHeader>
-						{title && <ModalTitle>{title}</ModalTitle>}
-						{showCloseButton && (
-							<CloseButton onClick={onClose} aria-label="Close">
-								×
-							</CloseButton>
+					<div className="modal-header">
+						{title && (
+							<h2 id="modal-title" className="modal-title">
+								{title}
+							</h2>
 						)}
-					</ModalHeader>
+						{showCloseButton && (
+							<button className="modal-close" onClick={onClose} aria-label="Close">
+								<Icon name="x" size="md" />
+							</button>
+						)}
+					</div>
 				)}
-				<ModalBody>{children}</ModalBody>
-			</ModalContent>
-		</Overlay>
+				<div className="modal-body">{children}</div>
+			</div>
+		</div>
 	);
 };
