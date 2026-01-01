@@ -1,0 +1,99 @@
+/**
+ * TeamConfigEditor Molecule Styles
+ */
+.editor {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-md);
+	padding-top: var(--spacing-md);
+	border-top: 1px solid var(--color-border);
+	border-radius: var(--radius-md);
+}
+
+.title {
+	margin: 0;
+	font-size: var(--font-size-md);
+	font-weight: var(--font-weight-semibold);
+	color: var(--color-text-primary);
+}
+
+.teamList {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-sm);
+}
+
+.teamRow {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-sm);
+	padding: var(--spacing-md);
+	background: var(--color-surface);
+	border-radius: var(--radius-md);
+	border: 1px solid var(--color-border);
+	transition: all 0.2s ease;
+}
+
+.teamRow:hover {
+	border-color: var(--color-primary-300);
+}
+
+.colorPicker {
+	width: 44px;
+	height: 44px;
+	padding: 0;
+	border: none;
+	border-radius: var(--radius-md);
+	cursor: pointer;
+}
+
+.colorPicker::-webkit-color-swatch-wrapper {
+	padding: 0;
+}
+
+.colorPicker::-webkit-color-swatch {
+	border: 2px solid var(--color-border);
+	border-radius: var(--radius-md);
+}
+
+.nameInput {
+	flex: 1;
+	padding: var(--spacing-sm) var(--spacing-md);
+	border: 1px solid var(--color-border);
+	border-radius: var(--radius-md);
+	background: var(--color-input-bg, var(--color-surface));
+	color: var(--color-text-primary);
+	font-size: var(--font-size-md);
+	transition: all 0.2s ease;
+}
+
+.nameInput:focus {
+	outline: none;
+	border-color: var(--color-primary);
+	box-shadow: 0 0 0 2px var(--color-focus-ring);
+}
+
+.nameInput::placeholder {
+	color: var(--color-text-tertiary);
+}
+
+.addButton {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: var(--spacing-sm);
+	padding: var(--spacing-md);
+	background: transparent;
+	border: 2px dashed var(--color-border);
+	border-radius: var(--radius-md);
+	cursor: pointer;
+	color: var(--color-text-secondary);
+	font-size: var(--font-size-md);
+	transition: all 0.2s ease;
+}
+
+.addButton:hover {
+	border-color: var(--color-primary);
+	color: var(--color-primary);
+	background: var(--color-primary-bg, rgba(14, 165, 233, 0.05));
+}

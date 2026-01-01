@@ -35,6 +35,8 @@ export interface PlayerQuestionDisplayProps {
 	timerSeconds?: number;
 	/** Whether timer is running */
 	timerRunning?: boolean;
+	/** Whether this player is the active player (team mode) */
+	isActivePlayer?: boolean;
 }
 
 /**

@@ -7,12 +7,14 @@
  *
  * @module pages/PlayerSessionPage
  */
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Trans } from '@lingui/react/macro';
 import { Button } from '../atoms';
 import { PlayerHeader, PlayerQuestionDisplay, PlayerSidebar, AnswerArea } from '../organisms';
+import { TeamSelection, TeamLeaderboard } from '../molecules';
 import { usePlayerSession } from '../../hooks/usePlayerSession';
+import { useTeam } from '../../hooks/useTeam';
 import styles from './PlayerSessionPage.module.css';
 
 export const PlayerSessionPage: React.FC = () => {
@@ -37,12 +39,45 @@ export const PlayerSessionPage: React.FC = () => {
 		imageVisible,
 		isInputLocked,
 		buzzerWinner,
+		isTeamMode,
 		// Actions
 		handleAnswerChange,
 		handleSubmitAnswer,
 		handleBuzzerPress,
 		handleLeave,
 	} = usePlayerSession();
+
+	// Team management hook - now with gameState for real-time sync
+	const {
+		teams,
+		currentTeamId,
+		currentTeam,
+		isActivePlayer,
+		loading: teamLoading,
+		error: teamError,
+		joinTeam,
+		refreshTeams,
+	} = useTeam({
+		sessionId: sessionId ?? null,
+		playerId: playerId ? parseInt(playerId) : null,
+		enabled: isTeamMode,
+		gameState: gameState,
+	});
+
+	// Local state for team selection
+	const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null);
+	const [joiningTeam, setJoiningTeam] = useState(false);
+
+	// Handle team join confirmation
+	const handleConfirmTeam = useCallback(async () => {
+		if (!selectedTeamId) return;
+		setJoiningTeam(true);
+		const success = await joinTeam(selectedTeamId);
+		setJoiningTeam(false);
+		if (!success) {
+			// Error is handled by useTeam hook
+		}
+	}, [selectedTeamId, joinTeam]);
 
 	// Loading state
 	if (loading) {
@@ -72,19 +107,42 @@ export const PlayerSessionPage: React.FC = () => {
 		);
 	}
 
+	// Team selection state (only show if team mode and no team selected)
+	if (isTeamMode && !currentTeamId && teams.length > 0) {
+		return (
+			<TeamSelection
+				teams={teams.map((t) => ({
+					id: t.id,
+					name: t.name,
+					color: t.color,
+					memberCount: t.memberCount,
+					connectedCount: t.connectedCount,
+				}))}
+				selectedTeamId={selectedTeamId}
+				sessionId={sessionId ?? ''}
+				playerName={player.name}
+				loading={joiningTeam}
+				error={teamError}
+				onSelectTeam={setSelectedTeamId}
+				onConfirm={handleConfirmTeam}
+				onBack={handleLeave}
+			/>
+		);
+	}
+
 	// Main render
 	return (
 		<div className={styles.container}>
 			<div className={styles.mainArea}>
-				<PlayerHeader sessionId={sessionId ?? ''} score={currentScore} isConnected={isConnected} onLeave={handleLeave} />
+				<PlayerHeader sessionId={sessionId ?? ''} score={currentScore} isConnected={isConnected} onLeave={handleLeave} teamName={currentTeam?.name} teamColor={currentTeam?.color} />
 
-				<PlayerQuestionDisplay question={currentQuestion} questionVisible={questionVisible} imageVisible={imageVisible} gameStatus={gameState?.status} timerSeconds={gameState?.timer} timerRunning={gameState?.timer_running} />
+				<PlayerQuestionDisplay question={currentQuestion} questionVisible={questionVisible} imageVisible={imageVisible} gameStatus={gameState?.status} timerSeconds={gameState?.timer} timerRunning={gameState?.timer_running} isActivePlayer={isTeamMode ? isActivePlayer : undefined} />
 
 				<AnswerArea
 					question={currentQuestion}
 					value={answer}
 					gameStatus={gameState?.status}
-					isLocked={isInputLocked}
+					isLocked={isInputLocked || (isTeamMode && !isActivePlayer && currentQuestion?.type !== 'buzzer')}
 					hasSubmitted={hasAnswered}
 					buzzerWinner={buzzerWinner}
 					currentPlayerId={parseInt(playerId ?? '-1')}
@@ -94,7 +152,27 @@ export const PlayerSessionPage: React.FC = () => {
 				/>
 			</div>
 
-			<PlayerSidebar score={currentScore} playerName={player.name} playerId={player.id} leaderboard={leaderboardEntries} />
+			<PlayerSidebar
+				score={currentScore}
+				playerName={player.name}
+				playerId={player.id}
+				leaderboard={leaderboardEntries}
+				isTeamMode={isTeamMode}
+				currentTeamId={currentTeamId}
+				teamLeaderboard={
+					isTeamMode
+						? teams.map((t, i) => ({
+								teamId: t.id,
+								teamName: t.name,
+								teamColor: t.color,
+								score: t.score,
+								rank: i + 1,
+								memberCount: t.memberCount,
+								connectedCount: t.connectedCount,
+						  }))
+						: undefined
+				}
+			/>
 		</div>
 	);
 };

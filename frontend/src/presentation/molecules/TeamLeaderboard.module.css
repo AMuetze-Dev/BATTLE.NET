@@ -1,0 +1,205 @@
+/**
+ * TeamLeaderboard Component Styles
+ * CSS Module for team leaderboard display
+ */
+
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+}
+
+.title {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--color-text);
+  margin: 0;
+  padding-bottom: var(--spacing-sm);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.empty {
+  padding: var(--spacing-lg);
+  text-align: center;
+  color: var(--color-text-secondary);
+  font-style: italic;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.entry {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--color-background);
+  border-radius: var(--radius-md);
+  transition: all 0.2s ease;
+}
+
+.entry.current {
+  background: var(--team-color);
+  background: linear-gradient(135deg, var(--team-color) 0%, color-mix(in srgb, var(--team-color) 80%, black) 100%);
+  color: white;
+}
+
+.entry.current .teamName,
+.entry.current .score,
+.entry.current .members {
+  color: white;
+}
+
+.rank {
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  min-width: 40px;
+  text-align: center;
+}
+
+.teamInfo {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  flex: 1;
+  min-width: 0;
+}
+
+.teamColorDot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--team-color);
+  flex-shrink: 0;
+}
+
+.entry.current .teamColorDot {
+  background: white;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3);
+}
+
+.teamName {
+  font-weight: 600;
+  color: var(--color-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.yourTeamBadge {
+  padding: 2px var(--spacing-xs);
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.members {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  flex-shrink: 0;
+}
+
+.memberIcon {
+  font-size: 1em;
+}
+
+.scoreContainer {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-width: 80px;
+  height: 32px;
+  padding: 0 var(--spacing-sm);
+  background: var(--color-surface);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.entry.current .scoreContainer {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.scoreBar {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: var(--score-percent, 0%);
+  background: var(--team-color);
+  opacity: 0.2;
+  transition: width 0.5s ease;
+}
+
+.entry.current .scoreBar {
+  background: white;
+  opacity: 0.3;
+}
+
+.score {
+  position: relative;
+  z-index: 1;
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text);
+}
+
+/* Animations */
+@keyframes scoreChange {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.score[data-changed="true"] {
+  animation: scoreChange 0.3s ease;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .entry {
+    flex-wrap: wrap;
+    gap: var(--spacing-sm);
+  }
+
+  .scoreContainer {
+    order: 2;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .members {
+    margin-left: auto;
+  }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .entry,
+  .scoreBar {
+    transition: none;
+  }
+
+  .score[data-changed="true"] {
+    animation: none;
+  }
+}

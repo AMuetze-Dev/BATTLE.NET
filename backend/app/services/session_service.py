@@ -31,12 +31,18 @@ class SessionService:
         return ''.join(secrets.choice(chars) for _ in range(settings.session_id_length))
 
     @staticmethod
-    async def create_session(db: AsyncSession) -> SessionModel:
+    async def create_session(
+        db: AsyncSession,
+        game_mode: str = "free-for-all",
+        team_config: Optional[dict] = None
+    ) -> SessionModel:
         """
         Create a new session.
         
         Args:
             db: Database session
+            game_mode: Game mode ('free-for-all' or 'team')
+            team_config: Team configuration dict (for team mode)
             
         Returns:
             SessionModel: Created session
@@ -57,7 +63,9 @@ class SessionService:
             if not existing:
                 session = SessionModel(
                     id=session_id,
-                    status="active"
+                    status="active",
+                    game_mode=game_mode,
+                    team_config=team_config
                 )
                 db.add(session)
                 
@@ -72,7 +80,7 @@ class SessionService:
                 await db.commit()
                 await db.refresh(session)
                 
-                logger.info(f"Created session: {session_id}")
+                logger.info(f"Created session: {session_id} with mode: {game_mode}")
                 return session
         
         raise ValueError("Failed to generate unique session ID")

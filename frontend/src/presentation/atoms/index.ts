@@ -15,8 +15,8 @@ export type { ModalProps } from './Modal';
 
 export { ConnectionStatus } from './ConnectionStatus';
 
-export { Icon, IconButton } from './Icon';
-export type { IconProps, IconButtonProps, IconName, IconSize, IconColor } from './Icon';
+export { Icon } from './Icon';
+export type { IconProps, IconName, IconSize, IconColor } from './Icon';
 
 // Answer Input Components
 export { TextInput } from './TextInput';
@@ -43,6 +43,19 @@ export type { HotspotInputProps } from './HotspotInput';
 export { SortingInput } from './SortingInput';
 export type { SortingInputProps } from './SortingInput';
 
+// New Question Type Input Components
+export { MatchingInput } from './MatchingInput';
+export type { MatchingInputProps, MatchingPair } from './MatchingInput';
+
+export { AudioInput } from './AudioInput';
+export type { AudioInputProps, AudioOption } from './AudioInput';
+
+export { ImageChoiceInput } from './ImageChoiceInput';
+export type { ImageChoiceInputProps, ImageOption } from './ImageChoiceInput';
+
+export { GeolocationInput } from './GeolocationInput';
+export type { GeolocationInputProps, GeoCoordinates } from './GeolocationInput';
+
 export { LeaderboardItem } from './LeaderboardItem';
 export type { LeaderboardItemProps } from './LeaderboardItem';
 
@@ -56,3 +69,9 @@ export { ParticleBackground } from './ParticleBackground';
 
 export { ActionCard } from './ActionCard';
 export type { ActionCardProps } from './ActionCard';
+
+export { FormGroup } from './FormGroup';
+export type { FormGroupProps } from './FormGroup';
+
+export { IconButton } from './IconButton';
+export type { IconButtonProps } from './IconButton';

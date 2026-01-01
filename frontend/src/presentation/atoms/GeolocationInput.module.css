@@ -1,0 +1,228 @@
+/**
+ * GeolocationInput - CSS Module for geolocation-based questions
+ * Theme-aware using CSS variables
+ */
+
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-md, 1rem);
+  width: 100%;
+  max-width: 800px;
+}
+
+.mapContainer {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16/9;
+  border: 2px solid var(--color-border, #e0e0e0);
+  border-radius: var(--radius-lg, 12px);
+  overflow: hidden;
+  background: var(--color-neutral-100, #f5f5f5);
+  cursor: crosshair;
+}
+
+.mapContainer.locked {
+  cursor: not-allowed;
+}
+
+/* Image mode styling */
+.mapImage {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  user-select: none;
+  pointer-events: none;
+}
+
+/* Map placeholder (for real map integration later) */
+.mapPlaceholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  color: var(--color-text-secondary, #666);
+  font-size: var(--font-size-lg, 1.125rem);
+  gap: var(--spacing-sm, 0.5rem);
+}
+
+.mapPlaceholder .icon {
+  font-size: 3rem;
+}
+
+/* Marker styling */
+.marker {
+  position: absolute;
+  transform: translate(-50%, -100%);
+  pointer-events: none;
+  z-index: 10;
+  transition: all 0.2s ease;
+}
+
+.markerIcon {
+  font-size: 2.5rem;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+  animation: markerDrop 0.3s ease-out;
+}
+
+@keyframes markerDrop {
+  0% {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Crosshair for aiming */
+.crosshair {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  opacity: 0.5;
+  z-index: 5;
+}
+
+.crosshair::before,
+.crosshair::after {
+  content: '';
+  position: absolute;
+  background: var(--color-primary, #3b82f6);
+}
+
+.crosshair::before {
+  width: 1px;
+  height: 20px;
+  left: 50%;
+  top: -10px;
+  transform: translateX(-50%);
+}
+
+.crosshair::after {
+  width: 20px;
+  height: 1px;
+  top: 50%;
+  left: -10px;
+  transform: translateY(-50%);
+}
+
+/* Instructions */
+.instructions {
+  font-size: var(--font-size-sm, 0.875rem);
+  color: var(--color-text-secondary, #666);
+  text-align: center;
+}
+
+/* Coordinates display */
+.coordinates {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md, 1rem);
+  padding: var(--spacing-sm, 0.5rem) var(--spacing-md, 1rem);
+  background: var(--color-surface, #fff);
+  border: 1px solid var(--color-border, #e0e0e0);
+  border-radius: var(--radius-md, 8px);
+  font-size: var(--font-size-sm, 0.875rem);
+  font-family: monospace;
+}
+
+.coordLabel {
+  color: var(--color-text-secondary, #666);
+}
+
+.coordValue {
+  color: var(--color-primary, #3b82f6);
+  font-weight: var(--font-weight-medium, 500);
+}
+
+/* Clear button */
+.clearButton {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs, 0.25rem);
+  padding: var(--spacing-xs, 0.25rem) var(--spacing-md, 1rem);
+  background: transparent;
+  border: 1px solid var(--color-error, #ef4444);
+  color: var(--color-error, #ef4444);
+  border-radius: var(--radius-md, 8px);
+  cursor: pointer;
+  font-size: var(--font-size-sm, 0.875rem);
+  transition: all 0.2s ease;
+}
+
+.clearButton:hover {
+  background: var(--color-error-light, rgba(239, 68, 68, 0.1));
+}
+
+/* Controls row */
+.controls {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md, 1rem);
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* Zoom controls for map mode */
+.zoomControls {
+  display: flex;
+  gap: var(--spacing-xs, 0.25rem);
+}
+
+.zoomButton {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-surface, #fff);
+  border: 1px solid var(--color-border, #e0e0e0);
+  border-radius: var(--radius-sm, 4px);
+  cursor: pointer;
+  font-size: var(--font-size-lg, 1.125rem);
+  transition: all 0.2s ease;
+}
+
+.zoomButton:hover {
+  background: var(--color-neutral-100, #f5f5f5);
+  border-color: var(--color-primary, #3b82f6);
+}
+
+/* Dark theme overrides */
+[data-theme="dark"] .mapContainer {
+  background: var(--color-neutral-800, #262626);
+  border-color: var(--color-border, #333);
+}
+
+[data-theme="dark"] .coordinates {
+  background: var(--color-surface, #1e1e1e);
+  border-color: var(--color-border, #333);
+}
+
+[data-theme="dark"] .zoomButton {
+  background: var(--color-surface, #1e1e1e);
+  border-color: var(--color-border, #333);
+}
+
+[data-theme="dark"] .zoomButton:hover {
+  background: var(--color-neutral-700, #404040);
+}
+
+/* Mobile responsive */
+@media (max-width: 640px) {
+  .mapContainer {
+    aspect-ratio: 4/3;
+  }
+
+  .controls {
+    flex-direction: column;
+    gap: var(--spacing-sm, 0.5rem);
+  }
+}

@@ -25,6 +25,8 @@ class SessionResponse(BaseModel):
     question_catalog: Optional[Dict[str, Any]] = None
     current_question_id: Optional[str] = None
     metadata_: Optional[Dict[str, Any]] = Field(None, serialization_alias="metadata")
+    game_mode: str = "free-for-all"
+    team_config: Optional[Dict[str, Any]] = None
 
 
 class SessionUpdate(BaseModel):
@@ -51,6 +53,7 @@ class PlayerResponse(BaseModel):
     connected: bool
     joined_at: datetime
     last_seen: datetime
+    team_id: Optional[str] = None
 
 
 class PlayerUpdate(BaseModel):

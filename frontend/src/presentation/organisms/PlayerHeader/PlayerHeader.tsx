@@ -20,16 +20,25 @@ export interface PlayerHeaderProps {
 	isConnected: boolean;
 	/** Callback when leave button is clicked */
 	onLeave: () => void;
+	/** Optional team info */
+	teamName?: string;
+	/** Optional team color */
+	teamColor?: string;
 }
 
 /**
  * Header component for player session page
  */
-export const PlayerHeader: React.FC<PlayerHeaderProps> = ({ sessionId, score, isConnected, onLeave }) => {
+export const PlayerHeader: React.FC<PlayerHeaderProps> = ({ sessionId, score, isConnected, onLeave, teamName, teamColor }) => {
 	return (
 		<header className={styles.header}>
 			<div className={styles.sessionInfo}>
 				<span className={styles.sessionCode}>#{sessionId}</span>
+				{teamName && (
+					<span className={styles.teamBadge} style={{ backgroundColor: teamColor || 'var(--color-accent)' }}>
+						{teamName}
+					</span>
+				)}
 				<div className={styles.mobileScore}>
 					<Icon name="trophy" size="sm" color="inverse" />
 					<span className={styles.scoreValue}>{score}</span>

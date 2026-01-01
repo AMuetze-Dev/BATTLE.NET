@@ -59,6 +59,8 @@ export interface GameState {
     player_id: number;
     player_name: string;
     timestamp: number;
+    team_id?: string;
+    team_name?: string;
   } | null;
   timer: number;
   timer_running: boolean;
@@ -71,6 +73,7 @@ export interface GameState {
     answered: boolean;
     locked_in?: boolean;
     current_answer?: string;
+    team_id?: string;
   }>;
   leaderboard: Array<{
     player_id: number;
@@ -79,6 +82,23 @@ export interface GameState {
   }>;
   quiz_title?: string;
   questions?: any[];
+  // Team mode fields
+  team_mode?: boolean;
+  teams?: Record<string, {
+    name: string;
+    color: string;
+    score: number;
+    member_ids: string[];
+  }>;
+  team_leaderboard?: Array<{
+    team_id: string;
+    team_name: string;
+    team_color: string;
+    score: number;
+    member_count: number;
+    connected_count: number;
+  }>;
+  active_players?: Record<string, string>;  // team_id -> player_id
 }
 
 export type WebSocketEventHandlers = {
@@ -442,6 +462,36 @@ export class WebSocketClient {
     this.socket?.emit('lock_in', {
       session_id: sessionId,
       player_id: playerId,
+    });
+  }
+  
+  // Team events
+  setupTeamMode(sessionId: string, teams: Array<{ id: string; name: string; color: string }>): void {
+    this.socket?.emit('setup_team_mode', {
+      session_id: sessionId,
+      teams,
+    });
+  }
+  
+  playerJoinTeam(sessionId: string, playerId: number, teamId: string): void {
+    this.socket?.emit('player_join_team', {
+      session_id: sessionId,
+      player_id: playerId,
+      team_id: teamId,
+    });
+  }
+  
+  selectActivePlayers(sessionId: string): void {
+    this.socket?.emit('select_active_players', {
+      session_id: sessionId,
+    });
+  }
+  
+  updateTeamScore(sessionId: string, teamId: string, delta: number): void {
+    this.socket?.emit('update_team_score', {
+      session_id: sessionId,
+      team_id: teamId,
+      delta,
     });
   }
   

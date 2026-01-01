@@ -48,6 +48,11 @@ export interface QuizCatalog {
   image_count?: number;
   created_at: string;
   updated_at: string;
+  gameMode?: 'free-for-all' | 'team';
+  teamConfig?: {
+    enabled: boolean;
+    teams: Array<{ id: string; name: string; color: string }>;
+  };
 }
 
 export interface QuizMetadata {

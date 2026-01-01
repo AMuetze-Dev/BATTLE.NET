@@ -14,7 +14,11 @@ export type QuestionType =
   | 'true-false'
   | 'buzzer'
   | 'hotspot'
-  | 'sorting';
+  | 'sorting'
+  | 'matching'
+  | 'audio'
+  | 'image-choice'
+  | 'geolocation';
 
 /** Normalized question type (lowercase with underscores) */
 export type NormalizedQuestionType =
@@ -25,7 +29,11 @@ export type NormalizedQuestionType =
   | 'true_false'
   | 'buzzer'
   | 'hotspot'
-  | 'sorting';
+  | 'sorting'
+  | 'matching'
+  | 'audio'
+  | 'image_choice'
+  | 'geolocation';
 
 /** Base question properties shared by all types */
 export interface BaseQuestion {
@@ -120,6 +128,70 @@ export interface SortingQuestion extends BaseQuestion {
   correctOrder?: string[];
 }
 
+// ============================================
+// NEW QUESTION TYPES
+// ============================================
+
+/** Matching pair for matching questions */
+export interface MatchingPair {
+  id: string;
+  left: string;
+  right: string;
+}
+
+/** Matching question - connect pairs */
+export interface MatchingQuestion extends BaseQuestion {
+  type: 'matching';
+  pairs: MatchingPair[];
+  shuffleRight?: boolean;
+}
+
+/** Audio question - answer based on audio playback */
+export interface AudioQuestion extends BaseQuestion {
+  type: 'audio';
+  audioUrl: string;
+  audioData?: string;
+  maxPlays?: number;
+  transcript?: string;
+  answerMode: 'text' | 'multiple-choice';
+  correctAnswers?: string[];
+  options?: MultipleChoiceOption[];
+}
+
+/** Image choice option */
+export interface ImageChoiceOption {
+  id: string;
+  imageUrl: string;
+  imageData?: string;
+  alt: string;
+  correct: boolean;
+}
+
+/** Image choice question - select correct image(s) */
+export interface ImageChoiceQuestion extends BaseQuestion {
+  type: 'image-choice';
+  imageOptions: ImageChoiceOption[];
+  multiSelect?: boolean;
+}
+
+/** Geographic coordinates */
+export interface GeoCoordinates {
+  lat: number;
+  lng: number;
+}
+
+/** Geolocation question - mark location on map/image */
+export interface GeolocationQuestion extends BaseQuestion {
+  type: 'geolocation';
+  mode: 'map' | 'image';
+  correctLocation: GeoCoordinates;
+  tolerance: number;
+  mapCenter?: GeoCoordinates;
+  mapZoom?: number;
+  imageUrl?: string;
+  imageData?: string;
+}
+
 /** Union of all question types */
 export type Question =
   | TextQuestion
@@ -129,7 +201,11 @@ export type Question =
   | TrueFalseQuestion
   | BuzzerQuestion
   | HotspotQuestion
-  | SortingQuestion;
+  | SortingQuestion
+  | MatchingQuestion
+  | AudioQuestion
+  | ImageChoiceQuestion
+  | GeolocationQuestion;
 
 /** Question as received from backend (less strict typing) */
 export interface QuestionDTO {
@@ -161,6 +237,20 @@ export interface QuestionDTO {
   hotspotY?: number;
   sortingItems?: SortingItem[];
   correctOrder?: string[];
+  // New question type fields
+  pairs?: MatchingPair[];
+  shuffleRight?: boolean;
+  audioUrl?: string;
+  audioData?: string;
+  maxPlays?: number;
+  transcript?: string;
+  answerMode?: 'text' | 'multiple-choice';
+  imageOptions?: ImageChoiceOption[];
+  multiSelect?: boolean;
+  mode?: 'map' | 'image';
+  correctLocation?: GeoCoordinates;
+  mapCenter?: GeoCoordinates;
+  mapZoom?: number;
 }
 
 /** Question display state */
@@ -179,6 +269,15 @@ export const isTrueFalseQuestion = (q: Question): q is TrueFalseQuestion => q.ty
 export const isBuzzerQuestion = (q: Question): q is BuzzerQuestion => q.type === 'buzzer';
 export const isHotspotQuestion = (q: Question): q is HotspotQuestion => q.type === 'hotspot';
 export const isSortingQuestion = (q: Question): q is SortingQuestion => q.type === 'sorting';
+export const isMatchingQuestion = (q: Question): q is MatchingQuestion => q.type === 'matching';
+export const isAudioQuestion = (q: Question): q is AudioQuestion => q.type === 'audio';
+export const isImageChoiceQuestion = (q: Question): q is ImageChoiceQuestion => q.type === 'image-choice';
+export const isGeolocationQuestion = (q: Question): q is GeolocationQuestion => q.type === 'geolocation';
+
+/** Check if question requires media loading */
+export const requiresMediaLoading = (q: Question): boolean => {
+  return q.type === 'audio' || q.type === 'image-choice' || q.type === 'geolocation';
+};
 
 /** Normalize question type to lowercase with underscores */
 export const normalizeQuestionType = (type: string): NormalizedQuestionType => {
@@ -196,6 +295,10 @@ export const getQuestionTypeLabel = (type: QuestionType): string => {
     'buzzer': 'Buzzer',
     'hotspot': 'Hotspot',
     'sorting': 'Sortieren',
+    'matching': 'Paarzuordnung',
+    'audio': 'Audiofrage',
+    'image-choice': 'Bildauswahl',
+    'geolocation': 'Geolocation',
   };
   return labels[type] || type;
 };
@@ -211,6 +314,10 @@ export const getQuestionTypeIcon = (type: QuestionType): string => {
     'buzzer': '🔔',
     'hotspot': '📍',
     'sorting': '↕️',
+    'matching': '🔗',
+    'audio': '🎵',
+    'image-choice': '🖼️',
+    'geolocation': '🌍',
   };
   return icons[type] || '❓';
 };

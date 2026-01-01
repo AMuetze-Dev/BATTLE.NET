@@ -7,11 +7,11 @@
 import React from 'react';
 import styled from 'styled-components';
 import { Trans } from '@lingui/react/macro';
-import { Button, TextInput, NumberInput, TrueFalseInput, MultipleChoiceInput, SliderInput, BuzzerButton, HotspotInput, SortingInput, Icon } from '../atoms';
+import { Button, TextInput, NumberInput, TrueFalseInput, MultipleChoiceInput, SliderInput, BuzzerButton, HotspotInput, SortingInput, MatchingInput, AudioInput, ImageChoiceInput, GeolocationInput, Icon } from '../atoms';
 import { colors, spacing, typography, borderRadius } from '../../theme';
 
 // Normalized question types used internally
-export type QuestionType = 'text' | 'number' | 'true_false' | 'multiple_choice' | 'slider' | 'buzzer' | 'hotspot' | 'sorting';
+export type QuestionType = 'text' | 'number' | 'true_false' | 'multiple_choice' | 'slider' | 'buzzer' | 'hotspot' | 'sorting' | 'matching' | 'audio' | 'image_choice' | 'geolocation';
 
 // Map various backend/editor type formats to normalized types
 const normalizeQuestionType = (type: string | undefined): QuestionType => {
@@ -35,6 +35,20 @@ const normalizeQuestionType = (type: string | undefined): QuestionType => {
 		case 'sorting':
 		case 'sort':
 			return 'sorting';
+		case 'matching':
+		case 'paarzuordnung':
+			return 'matching';
+		case 'audio':
+		case 'audiofrage':
+			return 'audio';
+		case 'image_choice':
+		case 'imagechoice':
+		case 'bildauswahl':
+			return 'image_choice';
+		case 'geolocation':
+		case 'geo':
+		case 'location':
+			return 'geolocation';
 		case 'number':
 		case 'input_number':
 		case 'inputnumber':
@@ -72,6 +86,23 @@ export interface Question {
 	sortingItems?: string[];
 	/** Shuffled item indices for sorting (sent from backend) */
 	shuffledOrder?: number[];
+	// New question type fields
+	/** Matching pairs for matching questions */
+	matchingPairs?: Array<{ leftId: string; leftText: string; rightId: string; rightText: string }>;
+	/** Audio URL for audio questions */
+	audioUrl?: string;
+	/** Max plays for audio questions */
+	maxPlays?: number;
+	/** Transcript for audio questions */
+	transcript?: string;
+	/** Answer mode for audio questions */
+	answerMode?: 'text' | 'multiple-choice';
+	/** Image options for image choice questions */
+	imageOptions?: Array<{ id: string; imageUrl: string; alt: string }>;
+	/** Allow multi-select for image choice */
+	multiSelect?: boolean;
+	/** Geolocation mode */
+	geoMode?: 'image' | 'map';
 }
 
 export interface AnswerInputProps {
@@ -258,6 +289,20 @@ export const AnswerInput: React.FC<AnswerInputProps> = ({ question, value, onCha
 
 			case 'sorting':
 				return <SortingInput value={value} onChange={onChange} items={getSortingItems()} locked={isInputLocked} />;
+
+			case 'matching':
+				return <MatchingInput value={value} onChange={onChange} pairs={question.matchingPairs || []} locked={isInputLocked} />;
+
+			case 'audio':
+				return (
+					<AudioInput value={value} onChange={onChange} audioUrl={question.audioUrl || ''} maxPlays={question.maxPlays} transcript={question.transcript} answerMode={question.answerMode || 'text'} options={getOptions().map((opt, idx) => ({ id: String(idx), text: opt }))} locked={isInputLocked} />
+				);
+
+			case 'image_choice':
+				return <ImageChoiceInput value={value} onChange={onChange} options={question.imageOptions || []} multiSelect={question.multiSelect} locked={isInputLocked} />;
+
+			case 'geolocation':
+				return <GeolocationInput value={value} onChange={onChange} mode={question.geoMode || 'image'} imageUrl={getHotspotImage()} locked={isInputLocked} />;
 
 			case 'number':
 				return <NumberInput value={value} onChange={onChange} min={question.min} max={question.max} step={question.step} locked={isInputLocked} placeholder="0" />;

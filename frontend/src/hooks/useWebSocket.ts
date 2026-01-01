@@ -172,6 +172,35 @@ export const useWebSocket = (handlers: WebSocketEventHandlers = {}) => {
     []
   );
   
+  // Team mode methods
+  const setupTeamMode = useCallback(
+    (sessionId: string, teams: Array<{ id: string; name: string; color: string }>) => {
+      wsClient.setupTeamMode(sessionId, teams);
+    },
+    []
+  );
+  
+  const playerJoinTeam = useCallback(
+    (sessionId: string, playerId: number, teamId: string) => {
+      wsClient.playerJoinTeam(sessionId, playerId, teamId);
+    },
+    []
+  );
+  
+  const selectActivePlayers = useCallback(
+    (sessionId: string) => {
+      wsClient.selectActivePlayers(sessionId);
+    },
+    []
+  );
+  
+  const updateTeamScore = useCallback(
+    (sessionId: string, teamId: string, delta: number) => {
+      wsClient.updateTeamScore(sessionId, teamId, delta);
+    },
+    []
+  );
+  
   return {
     joinSession,
     leaveSession,
@@ -194,5 +223,10 @@ export const useWebSocket = (handlers: WebSocketEventHandlers = {}) => {
     lockIn,
     updateLeaderboard,
     isConnected,
+    // Team mode
+    setupTeamMode,
+    playerJoinTeam,
+    selectActivePlayers,
+    updateTeamScore,
   };
 };

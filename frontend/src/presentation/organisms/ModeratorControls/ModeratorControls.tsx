@@ -2,12 +2,20 @@
  * ModeratorControls Organism - Battle.Net Quiz Platform
  *
  * Control panel for moderator actions: navigation, timer, visibility toggles.
+ * Includes team controls when in team mode.
  */
 
 import React from 'react';
 import { Trans } from '@lingui/react/macro';
 import { Button, Icon } from '../../atoms';
 import styles from './ModeratorControls.module.css';
+
+export interface TeamInfo {
+	id: string;
+	name: string;
+	color: string;
+	score: number;
+}
 
 export interface ModeratorControlsProps {
 	/** Current question index (0-based) */
@@ -28,6 +36,12 @@ export interface ModeratorControlsProps {
 	isTimerRunning: boolean;
 	/** Game status */
 	gameStatus: 'waiting' | 'playing' | 'finished';
+	/** Whether in team mode */
+	isTeamMode?: boolean;
+	/** Teams list (for team mode) */
+	teams?: TeamInfo[];
+	/** Current question type */
+	questionType?: string;
 
 	/** Callbacks */
 	onPreviousQuestion: () => void;
@@ -41,6 +55,10 @@ export interface ModeratorControlsProps {
 	onStopTimer: () => void;
 	onTimerValueChange: (value: number) => void;
 	onEndGame: () => void;
+	/** Select active players for input questions (team mode) */
+	onSelectActivePlayers?: () => void;
+	/** Award points to a team */
+	onTeamScoreChange?: (teamId: string, delta: number) => void;
 }
 
 /**
@@ -56,6 +74,9 @@ export const ModeratorControls: React.FC<ModeratorControlsProps> = ({
 	timerValue,
 	isTimerRunning,
 	gameStatus,
+	isTeamMode = false,
+	teams = [],
+	questionType,
 	onPreviousQuestion,
 	onNextQuestion,
 	onStartQuestion,
@@ -67,11 +88,14 @@ export const ModeratorControls: React.FC<ModeratorControlsProps> = ({
 	onStopTimer,
 	onTimerValueChange,
 	onEndGame,
+	onSelectActivePlayers,
+	onTeamScoreChange,
 }) => {
 	const isFirstQuestion = currentIndex <= 0;
 	const isLastQuestion = currentIndex >= totalQuestions - 1;
 	const isPlaying = gameStatus === 'playing';
 	const isFinished = gameStatus === 'finished';
+	const isInputQuestion = questionType?.toLowerCase().replace('-', '_') === 'input';
 
 	return (
 		<div className={styles.container}>
@@ -157,6 +181,47 @@ export const ModeratorControls: React.FC<ModeratorControlsProps> = ({
 					)}
 				</div>
 			</div>
+
+			{/* Team Controls Section (only in team mode) */}
+			{isTeamMode && (
+				<div className={styles.section}>
+					<h3 className={styles.sectionTitle}>
+						<Icon name="users" size="sm" />
+						<Trans id="moderator.controls.teams">Teams</Trans>
+					</h3>
+
+					{/* Select active players for input questions */}
+					{isInputQuestion && hasActiveQuestion && onSelectActivePlayers && (
+						<div className={styles.buttonRow}>
+							<Button size="sm" variant="primary" onClick={onSelectActivePlayers}>
+								<Icon name="refresh" size="xs" /> <Trans id="moderator.controls.selectActive">Aktive Spieler auswählen</Trans>
+							</Button>
+						</div>
+					)}
+
+					{/* Team score controls */}
+					{teams.length > 0 && onTeamScoreChange && (
+						<div className={styles.teamScoreGrid}>
+							{teams.map((team) => (
+								<div key={team.id} className={styles.teamScoreRow}>
+									<span className={styles.teamName} style={{ color: team.color }}>
+										{team.name}
+									</span>
+									<span className={styles.teamScore}>{team.score}</span>
+									<div className={styles.teamScoreButtons}>
+										<Button size="sm" variant="outline" onClick={() => onTeamScoreChange(team.id, -10)} title="-10 Punkte">
+											-10
+										</Button>
+										<Button size="sm" variant="success" onClick={() => onTeamScoreChange(team.id, 10)} title="+10 Punkte">
+											+10
+										</Button>
+									</div>
+								</div>
+							))}
+						</div>
+					)}
+				</div>
+			)}
 
 			{/* Game Control */}
 			<div className={styles.section}>

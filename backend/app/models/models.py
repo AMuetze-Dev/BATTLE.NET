@@ -46,6 +46,15 @@ class Session(Base):
     question_catalog: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
     current_question_id: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
     metadata_: Mapped[Optional[dict]] = mapped_column("metadata", JSON, nullable=True)
+    
+    # Game mode settings
+    game_mode: Mapped[str] = mapped_column(
+        String(20),
+        CheckConstraint("game_mode IN ('free-for-all', 'team')"),
+        default="free-for-all",
+        nullable=False
+    )
+    team_config: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
 
     # Relationships
     players: Mapped[list["Player"]] = relationship(
@@ -77,7 +86,7 @@ class Session(Base):
     )
 
     def __repr__(self) -> str:
-        return f"<Session(id={self.id}, status={self.status})>"
+        return f"<Session(id={self.id}, status={self.status}, mode={self.game_mode})>"
 
 
 class Player(Base):
@@ -106,6 +115,13 @@ class Player(Base):
         DateTime(timezone=True),
         default=lambda: datetime.now(timezone.utc),
         nullable=False
+    )
+    
+    # Team membership (nullable for free-for-all mode)
+    team_id: Mapped[Optional[str]] = mapped_column(
+        String(50),
+        ForeignKey("teams.id", ondelete="SET NULL"),
+        nullable=True
     )
 
     # Relationships

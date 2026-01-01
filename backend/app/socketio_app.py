@@ -68,8 +68,13 @@ def get_game_state(session_id: str) -> dict:
             'timer_running': False,
             'question_visible': False,  # Question not visible to players yet
             'image_visible': False,  # Image not visible to players yet
-            'players': {},  # {player_id: {name, score, connected, answered, locked_in, current_answer}}
+            'players': {},  # {player_id: {name, score, connected, answered, locked_in, current_answer, team_id}}
             'leaderboard': [],
+            # Team mode fields
+            'team_mode': False,
+            'teams': {},  # {team_id: {name, color, score, member_ids}}
+            'team_leaderboard': [],
+            'active_players': {},  # {team_id: player_id} for input questions
         }
     return session_game_states[session_id]
 
@@ -135,7 +140,8 @@ async def broadcast_game_state(session_id: str):
             'score': pdata['score'],
             'connected': pdata['connected'],
             'answered': pdata.get('answered', False),
-            'current_answer': pdata.get('current_answer', '')
+            'current_answer': pdata.get('current_answer', ''),
+            'team_id': pdata.get('team_id'),
         }
         for pid, pdata in game_state['players'].items()
     ]
@@ -146,6 +152,28 @@ async def broadcast_game_state(session_id: str):
         p['rank'] = i + 1
     
     game_state['leaderboard'] = players_list
+    
+    # Build team leaderboard if in team mode
+    if game_state.get('team_mode') and game_state.get('teams'):
+        team_list = []
+        for team_id, team_data in game_state['teams'].items():
+            # Calculate connected count
+            connected_count = sum(
+                1 for p in players_list
+                if p.get('team_id') == team_id and p.get('connected')
+            )
+            team_list.append({
+                'team_id': team_id,
+                'team_name': team_data['name'],
+                'team_color': team_data['color'],
+                'score': team_data['score'],
+                'member_count': len(team_data.get('member_ids', [])),
+                'connected_count': connected_count,
+            })
+        team_list.sort(key=lambda x: (-x['score'], x['team_name']))
+        for i, t in enumerate(team_list):
+            t['rank'] = i + 1
+        game_state['team_leaderboard'] = team_list
     
     await sio.emit('game_state_updated', {'game_state': game_state}, room=f"session_{session_id}")
 
@@ -268,6 +296,170 @@ async def leave_session(sid: str, data: dict):
         room=f"session_{session_id}"
     )
     await broadcast_game_state(session_id)
+
+
+@sio.event
+async def setup_team_mode(sid: str, data: dict):
+    """
+    Moderator sets up team mode for the session.
+    
+    Expects data:
+        session_id: str
+        teams: list of {id, name, color}
+    """
+    session_id = data.get('session_id')
+    teams = data.get('teams', [])
+    
+    if not session_id:
+        await sio.emit('error', {'message': 'session_id required'}, room=sid)
+        return
+    
+    game_state = get_game_state(session_id)
+    game_state['team_mode'] = True
+    game_state['teams'] = {
+        t['id']: {
+            'name': t['name'],
+            'color': t['color'],
+            'score': 0,
+            'member_ids': [],
+        }
+        for t in teams
+    }
+    
+    await sio.emit('team_mode_enabled', {
+        'teams': teams
+    }, room=f"session_{session_id}")
+    await broadcast_game_state(session_id)
+
+
+@sio.event
+async def player_join_team(sid: str, data: dict):
+    """
+    Player joins a team.
+    
+    Expects data:
+        session_id: str
+        player_id: int/str
+        team_id: str
+    """
+    session_id = data.get('session_id')
+    player_id = str(data.get('player_id'))
+    team_id = data.get('team_id')
+    
+    if not session_id or not player_id or not team_id:
+        await sio.emit('error', {'message': 'session_id, player_id, and team_id required'}, room=sid)
+        return
+    
+    game_state = get_game_state(session_id)
+    
+    if not game_state.get('team_mode'):
+        await sio.emit('error', {'message': 'Session is not in team mode'}, room=sid)
+        return
+    
+    if team_id not in game_state.get('teams', {}):
+        await sio.emit('error', {'message': 'Team not found'}, room=sid)
+        return
+    
+    # Remove from old team if any
+    for tid, tdata in game_state['teams'].items():
+        if player_id in tdata['member_ids']:
+            tdata['member_ids'].remove(player_id)
+    
+    # Add to new team
+    game_state['teams'][team_id]['member_ids'].append(player_id)
+    
+    # Update player's team_id in player state
+    if player_id in game_state['players']:
+        game_state['players'][player_id]['team_id'] = team_id
+    
+    player_name = game_state['players'].get(player_id, {}).get('name', 'Unknown')
+    
+    await sio.emit('player_joined_team', {
+        'player_id': player_id,
+        'player_name': player_name,
+        'team_id': team_id,
+        'team_name': game_state['teams'][team_id]['name'],
+    }, room=f"session_{session_id}")
+    await broadcast_game_state(session_id)
+
+
+@sio.event
+async def select_active_players(sid: str, data: dict):
+    """
+    Moderator selects active players for input questions (one per team).
+    
+    Expects data:
+        session_id: str
+    
+    Returns random selection of one connected player per team.
+    """
+    import random
+    
+    session_id = data.get('session_id')
+    
+    if not session_id:
+        await sio.emit('error', {'message': 'session_id required'}, room=sid)
+        return
+    
+    game_state = get_game_state(session_id)
+    
+    if not game_state.get('team_mode'):
+        return
+    
+    active_players = {}
+    
+    for team_id, team_data in game_state['teams'].items():
+        # Get connected players in this team
+        connected_in_team = [
+            pid for pid in team_data['member_ids']
+            if game_state['players'].get(pid, {}).get('connected')
+        ]
+        
+        if connected_in_team:
+            # Randomly select one
+            selected = random.choice(connected_in_team)
+            active_players[team_id] = selected
+    
+    game_state['active_players'] = active_players
+    
+    await sio.emit('active_players_selected', {
+        'active_players': active_players
+    }, room=f"session_{session_id}")
+    await broadcast_game_state(session_id)
+
+
+@sio.event
+async def update_team_score(sid: str, data: dict):
+    """
+    Moderator updates a team's score.
+    
+    Expects data:
+        session_id: str
+        team_id: str
+        delta: int
+    """
+    session_id = data.get('session_id')
+    team_id = data.get('team_id')
+    delta = data.get('delta', 0)
+    
+    if not session_id or not team_id:
+        await sio.emit('error', {'message': 'session_id and team_id required'}, room=sid)
+        return
+    
+    game_state = get_game_state(session_id)
+    
+    if team_id in game_state.get('teams', {}):
+        game_state['teams'][team_id]['score'] += delta
+        # Ensure score doesn't go below 0
+        if game_state['teams'][team_id]['score'] < 0:
+            game_state['teams'][team_id]['score'] = 0
+        
+        await sio.emit('team_score_updated', {
+            'team_id': team_id,
+            'new_score': game_state['teams'][team_id]['score'],
+            'delta': delta,
+        }, room=f"session_{session_id}")
+        await broadcast_game_state(session_id)
 
 
 @sio.event
@@ -504,7 +696,10 @@ async def lock_in(sid: str, data: dict):
 
 @sio.event
 async def buzzer_press(sid: str, data: dict):
-    """Player presses buzzer - first one wins. Only allowed for buzzer questions."""
+    """Player presses buzzer - first one wins. Only allowed for buzzer questions.
+    
+    In team mode: first player to buzz wins for their entire team.
+    """
     session_id = data.get('session_id')
     question_id = data.get('question_id')
     player_id = data.get('player_id')
@@ -536,11 +731,22 @@ async def buzzer_press(sid: str, data: dict):
         }, room=sid)
         return
     
+    # Determine team info if in team mode
+    team_id = None
+    team_name = None
+    if game_state.get('team_mode'):
+        player_data = game_state['players'].get(player_id, {})
+        team_id = player_data.get('team_id')
+        if team_id and team_id in game_state.get('teams', {}):
+            team_name = game_state['teams'][team_id]['name']
+    
     # First buzzer wins - lock input and set winner
     game_state['buzzer_winner'] = {
         'player_id': player_id,
         'player_name': player_name,
-        'timestamp': client_timestamp
+        'timestamp': client_timestamp,
+        'team_id': team_id,
+        'team_name': team_name,
     }
     game_state['input_locked'] = True
     
@@ -551,7 +757,9 @@ async def buzzer_press(sid: str, data: dict):
             'question_id': question_id,
             'player_id': player_id,
             'player_name': player_name,
-            'timestamp': client_timestamp
+            'timestamp': client_timestamp,
+            'team_id': team_id,
+            'team_name': team_name,
         },
         room=f"session_{session_id}"
     )

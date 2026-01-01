@@ -37,6 +37,9 @@ export interface PlayerSessionState {
   imageVisible: boolean;
   isInputLocked: boolean;
   buzzerWinner: GameState['buzzer_winner'] | null;
+  
+  // Team mode
+  isTeamMode: boolean;
 }
 
 /** Player session actions */
@@ -170,6 +173,13 @@ export const usePlayerSession = (): UsePlayerSessionReturn => {
   const imageVisible = gameState?.image_visible ?? false;
   const isInputLocked = gameState?.input_locked ?? true;
   const buzzerWinner = gameState?.buzzer_winner ?? null;
+  
+  // Team mode is determined from game state (session configuration)
+  const isTeamMode = useMemo(() => {
+    // Check if the game state indicates team mode
+    // This will be set by the server based on session configuration
+    return (gameState as any)?.team_mode === true;
+  }, [gameState]);
 
   // === Actions ===
 
@@ -231,6 +241,7 @@ export const usePlayerSession = (): UsePlayerSessionReturn => {
     imageVisible,
     isInputLocked,
     buzzerWinner,
+    isTeamMode,
     
     // Actions
     handleAnswerChange,

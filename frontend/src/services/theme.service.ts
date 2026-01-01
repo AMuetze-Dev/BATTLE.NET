@@ -14,20 +14,21 @@ const STORAGE_KEY = 'battlenet-theme';
  * Get the current theme preference from storage
  */
 export const getStoredTheme = (): Theme => {
-  if (typeof window === 'undefined') return 'light';
+  if (typeof window === 'undefined') return 'dark';
   
   const stored = localStorage.getItem(STORAGE_KEY);
   if (stored === 'light' || stored === 'dark' || stored === 'auto') {
     return stored;
   }
-  return 'auto';
+  // Default to dark mode if nothing is stored
+  return 'dark';
 };
 
 /**
  * Get the system's preferred color scheme
  */
 export const getSystemTheme = (): ResolvedTheme => {
-  if (typeof window === 'undefined') return 'light';
+  if (typeof window === 'undefined') return 'dark';
   
   return window.matchMedia('(prefers-color-scheme: dark)').matches
     ? 'dark'

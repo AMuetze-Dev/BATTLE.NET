@@ -7,7 +7,7 @@ import socketio
 
 from app.core.config import settings
 from app.core.logging import get_logger
-from app.api import sessions, players
+from app.api import sessions, players, teams
 from app.socketio_app import sio, socket_app
 
 logger = get_logger(__name__)
@@ -31,6 +31,7 @@ app.add_middleware(
 # Include routers
 app.include_router(sessions.router)
 app.include_router(players.router)
+app.include_router(teams.router)
 
 # Mount Socket.IO
 app.mount("/ws", socket_app)

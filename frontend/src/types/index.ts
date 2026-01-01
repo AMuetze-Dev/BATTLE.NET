@@ -103,3 +103,27 @@ export {
   formatTimer,
   isTimerUrgent,
 } from './game.types';
+
+// Team types
+export type {
+  GameMode,
+  TeamConfigType,
+  Team,
+  TeamMember,
+  TeamConfig,
+  TeamDefinition,
+  TeamJoinRequest,
+  TeamGameState,
+  TeamState,
+  TeamLeaderboardEntry,
+} from './team.types';
+
+export {
+  TEAM_COLORS,
+  DEFAULT_TEAMS,
+  createDefaultTeamConfig,
+  createTeamDefinition,
+  playerNeedsTeamSelection,
+  getTeamById,
+  calculateTeamScores,
+} from './team.types';

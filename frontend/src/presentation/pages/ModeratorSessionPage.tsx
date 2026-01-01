@@ -10,7 +10,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Trans } from '@lingui/react/macro';
 import { Button, Modal } from '../atoms';
-import { FileUpload } from '../molecules/FileUpload';
+import { FileUpload, TeamControls } from '../molecules';
 import { ModeratorSessionHeader, ModeratorControlBar, ModeratorQuestionArea, ModeratorLeaderboard } from '../organisms';
 import { useModeratorSession } from '../../hooks/useModeratorSession';
 import { useQuizUpload } from '../../hooks/useQuizUpload';
@@ -47,6 +47,8 @@ export const ModeratorSessionPage: React.FC = () => {
 		timerValue,
 		hoveredPlayerId,
 		buzzerWinner,
+		isTeamMode,
+		teams,
 		handleNextQuestion,
 		handlePrevQuestion,
 		handleRevealQuestion,
@@ -60,6 +62,8 @@ export const ModeratorSessionPage: React.FC = () => {
 		handleSetTimer,
 		setHoveredPlayerId,
 		reloadSession,
+		handleSelectActivePlayers,
+		handleTeamScoreChange,
 	} = useModeratorSession();
 
 	// Upload hook - file upload logic
@@ -128,6 +132,9 @@ export const ModeratorSessionPage: React.FC = () => {
 
 					{/* Control Bar Organism */}
 					<ModeratorControlBar currentIndex={currentQuestionIndex} totalQuestions={questions.length} timerValue={timerValue} onPrev={handlePrevQuestion} onNext={handleNextQuestion} onTimerChange={handleTimerChange} onSetTimer={handleSetTimer} />
+
+					{/* Team Controls (only in team mode) */}
+					{isTeamMode && teams.length > 0 && <TeamControls teams={teams} questionType={currentQuestion?.type} hasActiveQuestion={!!currentQuestion} onSelectActivePlayers={handleSelectActivePlayers} onTeamScoreChange={handleTeamScoreChange} />}
 
 					{/* Question Area Organism */}
 					{!currentQuestion ? (

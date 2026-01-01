@@ -33,17 +33,34 @@ class AttachQuizRequest(BaseModel):
     quiz_id: str
 
 
+class CreateSessionRequest(BaseModel):
+    """Request body for creating a session."""
+    game_mode: str = "free-for-all"
+    team_config: dict | None = None
+
+
 @router.post("", response_model=SessionResponse, status_code=201)
 async def create_session(
+    body: CreateSessionRequest = None,
     db: AsyncSession = Depends(get_db)
 ):
     """
     Create a new quiz session.
     
+    Args:
+        body: Optional session configuration (game_mode, team_config)
+    
     Returns:
         SessionResponse: Created session with moderator token
     """
-    session = await SessionService.create_session(db)
+    game_mode = body.game_mode if body else "free-for-all"
+    team_config = body.team_config if body else None
+    
+    session = await SessionService.create_session(
+        db, 
+        game_mode=game_mode,
+        team_config=team_config
+    )
     return SessionResponse.model_validate(session)
 
 

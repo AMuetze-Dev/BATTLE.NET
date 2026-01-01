@@ -12,6 +12,40 @@
     <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
     <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
     <title>Battle.Net Quiz Platform</title>
+    
+    <!-- Theme Initialization Script - Runs BEFORE React to prevent flash -->
+    <script>
+      (function() {
+        try {
+          const STORAGE_KEY = 'battlenet-theme';
+          const stored = localStorage.getItem(STORAGE_KEY);
+          
+          // Default to dark mode if no preference is stored
+          let theme = stored || 'dark';
+          
+          // If theme is 'auto', resolve based on system preference
+          if (theme === 'auto') {
+            theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+          }
+          
+          // Apply theme immediately to prevent flash
+          document.documentElement.setAttribute('data-theme', theme);
+          
+          // Update meta theme-color
+          const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+          if (metaThemeColor) {
+            metaThemeColor.setAttribute('content', theme === 'dark' ? '#18181b' : '#ffffff');
+          }
+          
+          // Store dark as default if nothing was stored
+          if (!stored) {
+            localStorage.setItem(STORAGE_KEY, 'dark');
+          }
+        } catch (e) {
+          // Fail silently
+        }
+      })();
+    </script>
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>

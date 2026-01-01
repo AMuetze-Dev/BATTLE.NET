@@ -113,6 +113,43 @@
   font-weight: var(--font-weight-medium);
 }
 
+/* Team Score Controls */
+.teamScoreGrid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.teamScoreRow {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-xs);
+  background: var(--color-bg-elevated);
+  border-radius: var(--radius-sm);
+}
+
+.teamName {
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-sm);
+  min-width: 80px;
+}
+
+.teamScore {
+  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-md);
+  font-variant-numeric: tabular-nums;
+  min-width: 50px;
+  text-align: right;
+  color: var(--color-text-primary);
+}
+
+.teamScoreButtons {
+  display: flex;
+  gap: var(--spacing-xs);
+  margin-left: auto;
+}
+
 /* Responsive */
 @media (max-width: 1200px) {
   .container {

@@ -1,0 +1,75 @@
+/**
+ * IconButton Atom Styles
+ */
+.iconButton {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border: 1px solid var(--color-border);
+	border-radius: var(--radius-md);
+	cursor: pointer;
+	transition: all 0.2s ease;
+	background: transparent;
+	color: var(--color-text-secondary);
+}
+
+.iconButton:hover:not(:disabled) {
+	border-color: var(--color-primary);
+	color: var(--color-primary);
+	background: var(--color-primary-bg, rgba(14, 165, 233, 0.05));
+}
+
+.iconButton:disabled {
+	opacity: 0.4;
+	cursor: not-allowed;
+}
+
+/* Sizes */
+.sm {
+	width: 32px;
+	height: 32px;
+	font-size: 14px;
+}
+
+.md {
+	width: 40px;
+	height: 40px;
+	font-size: 16px;
+}
+
+.lg {
+	width: 48px;
+	height: 48px;
+	font-size: 20px;
+}
+
+/* Variants */
+.primary {
+	background: var(--color-primary-500);
+	border-color: var(--color-primary-500);
+	color: var(--color-text-inverse);
+}
+
+.primary:hover:not(:disabled) {
+	background: var(--color-primary-600);
+	border-color: var(--color-primary-600);
+}
+
+.danger {
+	color: var(--color-error-500);
+}
+
+.danger:hover:not(:disabled) {
+	background: var(--color-error-bg, rgba(239, 68, 68, 0.1));
+	border-color: var(--color-error-500);
+	color: var(--color-error-600);
+}
+
+.ghost {
+	border: none;
+	background: transparent;
+}
+
+.ghost:hover:not(:disabled) {
+	background: var(--color-hover-overlay);
+}

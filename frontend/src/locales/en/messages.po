@@ -898,3 +898,107 @@ msgstr ""
 #: src/presentation/pages/QuizEditorPage.tsx:522
 #~ msgid "Zurück"
 #~ msgstr "Back"
+
+#. js-lingui-explicit-id
+#. Team Selection
+#: src/presentation/molecules/TeamSelection.tsx
+msgid "teamSelection.title"
+msgstr "Choose your Team"
+
+#. js-lingui-explicit-id
+#: src/presentation/molecules/TeamSelection.tsx
+msgid "teamSelection.subtitle"
+msgstr "Hello {playerName}! Choose a team to join the quiz."
+
+#. js-lingui-explicit-id
+#: src/presentation/molecules/TeamSelection.tsx
+msgid "teamSelection.players"
+msgstr " Players"
+
+#. js-lingui-explicit-id
+#: src/presentation/molecules/TeamSelection.tsx
+msgid "teamSelection.full"
+msgstr "Full"
+
+#. js-lingui-explicit-id
+#: src/presentation/molecules/TeamSelection.tsx
+msgid "teamSelection.selected"
+msgstr "Selected"
+
+#. js-lingui-explicit-id
+#: src/presentation/molecules/TeamSelection.tsx
+msgid "teamSelection.joinTeam"
+msgstr "Join Team"
+
+#. js-lingui-explicit-id
+#. Team Leaderboard
+#: src/presentation/molecules/TeamLeaderboard.tsx
+msgid "teamLeaderboard.title"
+msgstr "Team Leaderboard"
+
+#. js-lingui-explicit-id
+#: src/presentation/molecules/TeamLeaderboard.tsx
+msgid "teamLeaderboard.noTeams"
+msgstr "No teams available"
+
+#. js-lingui-explicit-id
+#: src/presentation/molecules/TeamLeaderboard.tsx
+msgid "teamLeaderboard.yourTeam"
+msgstr "Your Team"
+
+#. js-lingui-explicit-id
+#. Quiz Editor - Game Mode
+#: src/presentation/pages/QuizEditorPage.tsx
+msgid "quizEditor.gameMode"
+msgstr "Game Mode"
+
+#. js-lingui-explicit-id
+#: src/presentation/pages/QuizEditorPage.tsx
+msgid "quizEditor.freeForAll"
+msgstr "Free For All"
+
+#. js-lingui-explicit-id
+#: src/presentation/pages/QuizEditorPage.tsx
+msgid "quizEditor.freeForAllDesc"
+msgstr "Every player plays for themselves"
+
+#. js-lingui-explicit-id
+#: src/presentation/pages/QuizEditorPage.tsx
+msgid "quizEditor.teamMode"
+msgstr "Team Mode"
+
+#. js-lingui-explicit-id
+#: src/presentation/pages/QuizEditorPage.tsx
+msgid "quizEditor.teamModeDesc"
+msgstr "Players form teams and play together"
+
+#. js-lingui-explicit-id
+#: src/presentation/pages/QuizEditorPage.tsx
+msgid "quizEditor.teamConfig"
+msgstr "Configure Teams"
+
+#. js-lingui-explicit-id
+#: src/presentation/pages/QuizEditorPage.tsx
+msgid "quizEditor.addTeam"
+msgstr "Add Team"
+
+#. js-lingui-explicit-id
+#. Moderator Controls - Teams
+#: src/presentation/organisms/ModeratorControls/ModeratorControls.tsx
+msgid "moderator.controls.teams"
+msgstr "Teams"
+
+#. js-lingui-explicit-id
+#: src/presentation/organisms/ModeratorControls/ModeratorControls.tsx
+msgid "moderator.controls.selectActive"
+msgstr "Select Active Players"
+
+#. js-lingui-explicit-id
+#: src/presentation/molecules/TeamControls/TeamControls.tsx
+msgid "moderator.teamControls.title"
+msgstr "Team Controls"
+
+#. js-lingui-explicit-id
+#: src/presentation/molecules/TeamControls/TeamControls.tsx
+msgid "moderator.teamControls.selectActive"
+msgstr "Roll Active Players"

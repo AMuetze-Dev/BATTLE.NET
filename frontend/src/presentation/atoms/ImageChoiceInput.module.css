@@ -1,0 +1,212 @@
+/**
+ * ImageChoiceInput - CSS Module for image-based choice questions
+ * Theme-aware using CSS variables
+ */
+
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-md, 1rem);
+  width: 100%;
+  max-width: 800px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--spacing-md, 1rem);
+  width: 100%;
+}
+
+.imageCard {
+  position: relative;
+  aspect-ratio: 1;
+  border: 3px solid var(--color-border, #e0e0e0);
+  border-radius: var(--radius-lg, 12px);
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: var(--color-surface, #fff);
+}
+
+.imageCard:hover:not(.locked) {
+  border-color: var(--color-primary, #3b82f6);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.imageCard.selected {
+  border-color: var(--color-primary, #3b82f6);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+.imageCard.locked {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.imageWrapper {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-neutral-100, #f5f5f5);
+}
+
+.image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: opacity 0.3s ease;
+}
+
+.image.loading {
+  opacity: 0;
+}
+
+.placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  font-size: 2rem;
+  color: var(--color-text-tertiary, #999);
+}
+
+/* Selection overlay */
+.selectionOverlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(59, 130, 246, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.imageCard.selected .selectionOverlay {
+  opacity: 1;
+}
+
+.checkmark {
+  width: 48px;
+  height: 48px;
+  background: var(--color-primary, #3b82f6);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: bold;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Index badge */
+.indexBadge {
+  position: absolute;
+  top: var(--spacing-sm, 0.5rem);
+  left: var(--spacing-sm, 0.5rem);
+  width: 28px;
+  height: 28px;
+  background: var(--color-surface, #fff);
+  color: var(--color-text-primary, #1a1a1a);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-sm, 0.875rem);
+  font-weight: var(--font-weight-bold, 700);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  z-index: 2;
+}
+
+.imageCard.selected .indexBadge {
+  background: var(--color-primary, #3b82f6);
+  color: white;
+}
+
+/* Alt text on hover */
+.altText {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: var(--spacing-sm, 0.5rem);
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.7));
+  color: white;
+  font-size: var(--font-size-sm, 0.875rem);
+  text-align: center;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.imageCard:hover .altText,
+.imageCard:focus .altText {
+  opacity: 1;
+}
+
+/* Multi-select hint */
+.hint {
+  font-size: var(--font-size-sm, 0.875rem);
+  color: var(--color-text-secondary, #666);
+  text-align: center;
+}
+
+/* Selection count */
+.selectionCount {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs, 0.25rem);
+  font-size: var(--font-size-sm, 0.875rem);
+  color: var(--color-primary, #3b82f6);
+  font-weight: var(--font-weight-medium, 500);
+}
+
+/* Dark theme overrides */
+[data-theme="dark"] .imageCard {
+  background: var(--color-surface, #1e1e1e);
+  border-color: var(--color-border, #333);
+}
+
+[data-theme="dark"] .imageCard:hover:not(.locked) {
+  border-color: var(--color-primary, #60a5fa);
+}
+
+[data-theme="dark"] .imageWrapper {
+  background: var(--color-neutral-800, #262626);
+}
+
+[data-theme="dark"] .indexBadge {
+  background: var(--color-surface, #1e1e1e);
+  color: var(--color-text-primary, #f5f5f5);
+}
+
+[data-theme="dark"] .imageCard.selected .indexBadge {
+  background: var(--color-primary, #60a5fa);
+  color: white;
+}
+
+/* Mobile responsive */
+@media (max-width: 480px) {
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--spacing-sm, 0.5rem);
+  }
+
+  .checkmark {
+    width: 36px;
+    height: 36px;
+    font-size: 1.25rem;
+  }
+
+  .indexBadge {
+    width: 24px;
+    height: 24px;
+    font-size: var(--font-size-xs, 0.75rem);
+  }
+}

@@ -1,0 +1,55 @@
+/**
+ * GameModeSelector Molecule Styles
+ */
+.selector {
+	display: flex;
+	gap: var(--spacing-md);
+}
+
+.option {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--spacing-xs);
+	flex: 1;
+	padding: var(--spacing-md);
+	background: var(--color-surface);
+	border: 2px solid var(--color-border);
+	border-radius: var(--radius-lg);
+	cursor: pointer;
+	transition: all 0.2s ease;
+	color: var(--color-text-primary);
+}
+
+.option svg {
+	color: var(--color-text-secondary);
+}
+
+.option:hover {
+	border-color: var(--color-primary);
+	background: var(--color-surface-hover);
+}
+
+.option:hover svg {
+	color: var(--color-primary);
+}
+
+.option.active {
+	background: var(--color-primary-100, rgba(14, 165, 233, 0.15));
+	border-color: var(--color-primary);
+}
+
+.option.active svg {
+	color: var(--color-primary);
+}
+
+.label {
+	font-weight: 600;
+	color: inherit;
+}
+
+.description {
+	font-size: var(--font-size-sm);
+	color: var(--color-text-secondary);
+	text-align: center;
+}

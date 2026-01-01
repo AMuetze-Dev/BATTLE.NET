@@ -9,6 +9,10 @@ from app.models.models import (
     Answer,
     BuzzerPress,
 )
+from app.models.team_models import (
+    Team,
+    TeamMember,
+)
 
 __all__ = [
     "Session",
@@ -17,4 +21,6 @@ __all__ = [
     "Question",
     "Answer",
     "BuzzerPress",
+    "Team",
+    "TeamMember",
 ]

@@ -73,6 +73,10 @@ export interface ModeratorSessionState {
   buzzerWinner: GameState['buzzer_winner'] | null;
   timerRunning: boolean;
   currentTimer: number | null;
+  
+  // Team mode
+  isTeamMode: boolean;
+  teams: Array<{ id: string; name: string; color: string; score: number; memberCount: number }>;
 }
 
 /** Moderator session actions */
@@ -102,6 +106,10 @@ export interface ModeratorSessionActions {
   
   // Session
   reloadSession: () => Promise<void>;
+  
+  // Team mode actions
+  handleSelectActivePlayers: () => void;
+  handleTeamScoreChange: (teamId: string, delta: number) => void;
 }
 
 /** Hook return type */
@@ -150,6 +158,8 @@ export const useModeratorSession = (): UseModeratorSessionReturn => {
     awardPointsCorrect,
     awardPointsWrong,
     isConnected,
+    selectActivePlayers: wsSelectActivePlayers,
+    updateTeamScore: wsUpdateTeamScore,
   } = useWebSocket({
     onConnected: () => {
       if (sessionId) {
@@ -254,6 +264,19 @@ export const useModeratorSession = (): UseModeratorSessionReturn => {
   const buzzerWinner = gameState?.buzzer_winner ?? null;
   const timerRunning = gameState?.timer_running ?? false;
   const currentTimer = gameState?.timer ?? null;
+  
+  // Team mode state
+  const isTeamMode = gameState?.team_mode ?? false;
+  const teams = useMemo(() => {
+    if (!gameState?.teams) return [];
+    return Object.entries(gameState.teams).map(([id, data]) => ({
+      id,
+      name: data.name,
+      color: data.color,
+      score: data.score,
+      memberCount: data.member_ids.length,
+    }));
+  }, [gameState?.teams]);
 
   // === Actions ===
 
@@ -359,6 +382,17 @@ export const useModeratorSession = (): UseModeratorSessionReturn => {
     }
   }, [sessionId]);
 
+  // Team mode actions
+  const handleSelectActivePlayers = useCallback(() => {
+    if (!sessionId) return;
+    wsSelectActivePlayers(sessionId);
+  }, [sessionId, wsSelectActivePlayers]);
+
+  const handleTeamScoreChange = useCallback((teamId: string, delta: number) => {
+    if (!sessionId) return;
+    wsUpdateTeamScore(sessionId, teamId, delta);
+  }, [sessionId, wsUpdateTeamScore]);
+
   return {
     // State
     sessionId,
@@ -383,6 +417,8 @@ export const useModeratorSession = (): UseModeratorSessionReturn => {
     buzzerWinner,
     timerRunning,
     currentTimer,
+    isTeamMode,
+    teams,
     
     // Actions
     handleStartQuestion,
@@ -399,6 +435,8 @@ export const useModeratorSession = (): UseModeratorSessionReturn => {
     handleSetTimer,
     setHoveredPlayerId,
     reloadSession,
+    handleSelectActivePlayers,
+    handleTeamScoreChange,
   };
 };
 

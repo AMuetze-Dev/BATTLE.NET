@@ -4,7 +4,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { FiPlus, FiTrash2, FiUpload, FiDownload, FiEdit2, FiMenu, FiFile, FiArrowLeft, FiSave, FiImage, FiFolder } from 'react-icons/fi';
+import { FiPlus, FiTrash2, FiUpload, FiDownload, FiEdit2, FiMenu, FiFile, FiArrowLeft, FiSave, FiImage, FiFolder, FiUsers } from 'react-icons/fi';
 import { Trans } from '@lingui/react/macro';
 import JSZip from 'jszip';
 import { Button } from '../atoms/Button';
@@ -12,9 +12,14 @@ import { Input } from '../atoms/Input';
 import { Card } from '../atoms/Card';
 import { Modal } from '../atoms/Modal';
 import { Icon } from '../atoms/Icon';
+import { FormGroup as FormGroupAtom } from '../atoms/FormGroup';
+import { IconButton as IconBtn } from '../atoms/IconButton';
+import { GameModeSelector as GameModeSelectorComponent, TeamConfigEditor } from '../molecules';
 import { Layout } from '../organisms/Layout';
 import { api, QuizMetadata } from '../../services/api';
 import { colors, spacing } from '../../theme';
+import { GameMode, TeamConfig, TeamDefinition, TEAM_COLORS, createDefaultTeamConfig, createTeamDefinition } from '../../types/team.types';
+import styles from './QuizEditorPage.module.css';
 
 interface Answer {
 	id: string;
@@ -24,7 +29,7 @@ interface Answer {
 
 interface Question {
 	id: string;
-	type: 'multiple-choice' | 'true-false' | 'text' | 'buzzer' | 'slider' | 'hotspot' | 'sorting';
+	type: 'multiple-choice' | 'true-false' | 'text' | 'buzzer' | 'slider' | 'hotspot' | 'sorting' | 'matching' | 'audio' | 'image-choice' | 'geolocation';
 	question: string;
 	answers: Answer[];
 	correctAnswer: number;
@@ -46,12 +51,30 @@ interface Question {
 	hotspotAllowZoom?: boolean;
 	// Sorting-specific fields
 	sortingItems?: string[]; // Items in correct order
+	// Matching-specific fields
+	matchingPairs?: Array<{ id: string; left: string; right: string }>;
+	// Audio-specific fields
+	audioUrl?: string;
+	audioData?: string;
+	audioMaxPlays?: number;
+	audioTranscript?: string;
+	audioAnswerMode?: 'text' | 'multiple-choice';
+	// Image choice-specific fields
+	imageOptions?: Array<{ id: string; imageUrl: string; imageData?: string; alt: string; correct: boolean }>;
+	imageChoiceMultiSelect?: boolean;
+	// Geolocation-specific fields
+	geoMode?: 'image' | 'map';
+	geoCorrectX?: number;
+	geoCorrectY?: number;
+	geoTolerance?: number;
 }
 
 interface QuestionCatalog {
 	title: string;
 	description: string;
 	questions: Question[];
+	gameMode: GameMode;
+	teamConfig: TeamConfig;
 }
 
 export const QuizEditorPage: React.FC = () => {
@@ -63,10 +86,13 @@ export const QuizEditorPage: React.FC = () => {
 		title: 'Neues Quiz',
 		description: '',
 		questions: [],
+		gameMode: 'free-for-all',
+		teamConfig: createDefaultTeamConfig(),
 	});
 	const [editingQuestion, setEditingQuestion] = useState<Question | null>(null);
 	const [showQuestionModal, setShowQuestionModal] = useState(false);
 	const [showLoadModal, setShowLoadModal] = useState(false);
+	const [showTeamModal, setShowTeamModal] = useState(false);
 	const [savedQuizId, setSavedQuizId] = useState<string | null>(quizIdFromUrl);
 	const [saving, setSaving] = useState(false);
 	const [loadingQuizList, setLoadingQuizList] = useState(false);
@@ -78,10 +104,21 @@ export const QuizEditorPage: React.FC = () => {
 		setShowLoadModal(false);
 		try {
 			const quiz = await api.quizzes.get(quizId);
+			// Normalize teamConfig to ensure required fields exist (TypeScript expects full TeamConfig)
+			const normalizedTeamConfig = quiz.teamConfig
+				? ({
+						...createDefaultTeamConfig(),
+						...quiz.teamConfig,
+						teams: quiz.teamConfig.teams && quiz.teamConfig.teams.length > 0 ? quiz.teamConfig.teams : createDefaultTeamConfig().teams,
+				  } as any)
+				: createDefaultTeamConfig();
+
 			setCatalog({
 				title: quiz.title,
 				description: quiz.description || '',
 				questions: quiz.questions || [],
+				gameMode: quiz.gameMode || 'free-for-all',
+				teamConfig: normalizedTeamConfig,
 			});
 			setSavedQuizId(quizId);
 			// Update URL with quiz ID only if requested
@@ -127,12 +164,27 @@ export const QuizEditorPage: React.FC = () => {
 			return;
 		}
 
+		// Validate team config if in team mode
+		if (catalog.gameMode === 'team') {
+			if (catalog.teamConfig.teams.length < 2) {
+				alert('Mindestens 2 Teams erforderlich für den Teammodus.');
+				return;
+			}
+			const emptyTeamNames = catalog.teamConfig.teams.some((t) => !t.name.trim());
+			if (emptyTeamNames) {
+				alert('Alle Teams benötigen einen Namen.');
+				return;
+			}
+		}
+
 		setSaving(true);
 		try {
 			const quizData = {
 				title: catalog.title,
 				description: catalog.description || '',
 				questions: catalog.questions,
+				gameMode: catalog.gameMode,
+				teamConfig: catalog.gameMode === 'team' ? catalog.teamConfig : null,
 				quiz_id: savedQuizId || undefined,
 			};
 
@@ -167,10 +219,13 @@ export const QuizEditorPage: React.FC = () => {
 			title: 'Neues Quiz',
 			description: '',
 			questions: [],
+			gameMode: 'free-for-all',
+			teamConfig: createDefaultTeamConfig(),
 		});
 		setSavedQuizId(null);
 		setEditingQuestion(null);
 		setShowQuestionModal(false);
+		setShowTeamModal(false);
 	};
 
 	const createNewQuestion = (): Question => ({
@@ -213,6 +268,59 @@ export const QuizEditorPage: React.FC = () => {
 		if (editingQuestion.type === 'hotspot') {
 			if (!editingQuestion.imageData && !editingQuestion.imageUrl) {
 				alert('Fehler: Hotspot-Fragen benötigen ein Bild.');
+				return;
+			}
+		}
+
+		// Validate matching question
+		if (editingQuestion.type === 'matching') {
+			const pairs = editingQuestion.matchingPairs || [];
+			if (pairs.length < 2) {
+				alert('Fehler: Paarzuordnungs-Fragen benötigen mindestens 2 Paare.');
+				return;
+			}
+			const hasEmptyPair = pairs.some((p) => !p.left.trim() || !p.right.trim());
+			if (hasEmptyPair) {
+				alert('Fehler: Alle Paare müssen ausgefüllt sein.');
+				return;
+			}
+		}
+
+		// Validate audio question
+		if (editingQuestion.type === 'audio') {
+			if (!editingQuestion.audioData && !editingQuestion.audioUrl) {
+				alert('Fehler: Audio-Fragen benötigen eine Audiodatei.');
+				return;
+			}
+		}
+
+		// Validate image-choice question
+		if (editingQuestion.type === 'image-choice') {
+			const options = editingQuestion.imageOptions || [];
+			if (options.length < 2) {
+				alert('Fehler: Bildauswahl-Fragen benötigen mindestens 2 Optionen.');
+				return;
+			}
+			const hasEmptyImage = options.some((o) => !o.imageData && !o.imageUrl);
+			if (hasEmptyImage) {
+				alert('Fehler: Alle Bildoptionen müssen ein Bild haben.');
+				return;
+			}
+			const hasCorrect = options.some((o) => o.correct);
+			if (!hasCorrect) {
+				alert('Fehler: Mindestens eine Bildoption muss als korrekt markiert sein.');
+				return;
+			}
+		}
+
+		// Validate geolocation question
+		if (editingQuestion.type === 'geolocation') {
+			if (editingQuestion.geoMode !== 'map' && !editingQuestion.imageData && !editingQuestion.imageUrl) {
+				alert('Fehler: Geolocation-Fragen im Bildmodus benötigen ein Hintergrundbild.');
+				return;
+			}
+			if (editingQuestion.geoCorrectX === undefined || editingQuestion.geoCorrectY === undefined) {
+				alert('Fehler: Bitte markiere die korrekte Position auf dem Bild.');
 				return;
 			}
 		}
@@ -354,6 +462,41 @@ export const QuizEditorPage: React.FC = () => {
 				delete newQuestion.hotspotX;
 				delete newQuestion.hotspotY;
 				delete newQuestion.hotspotAllowZoom;
+			} else if (value === 'matching') {
+				newQuestion.answers = [];
+				newQuestion.correctAnswer = 0;
+				newQuestion.matchingPairs = [
+					{ id: 'p1', left: '', right: '' },
+					{ id: 'p2', left: '', right: '' },
+				];
+				delete newQuestion.correctAnswerText;
+				delete newQuestion.textInputType;
+			} else if (value === 'audio') {
+				newQuestion.answers = [];
+				newQuestion.correctAnswer = 0;
+				newQuestion.audioMaxPlays = 3;
+				newQuestion.audioAnswerMode = 'text';
+				newQuestion.correctAnswerText = '';
+				delete newQuestion.textInputType;
+			} else if (value === 'image-choice') {
+				newQuestion.answers = [];
+				newQuestion.correctAnswer = 0;
+				newQuestion.imageOptions = [
+					{ id: 'opt1', imageUrl: '', alt: 'Option A', correct: true },
+					{ id: 'opt2', imageUrl: '', alt: 'Option B', correct: false },
+				];
+				newQuestion.imageChoiceMultiSelect = false;
+				delete newQuestion.correctAnswerText;
+				delete newQuestion.textInputType;
+			} else if (value === 'geolocation') {
+				newQuestion.answers = [];
+				newQuestion.correctAnswer = 0;
+				newQuestion.geoMode = 'image';
+				newQuestion.geoTolerance = 5;
+				newQuestion.geoCorrectX = 50;
+				newQuestion.geoCorrectY = 50;
+				delete newQuestion.correctAnswerText;
+				delete newQuestion.textInputType;
 			}
 
 			setEditingQuestion(newQuestion);
@@ -376,6 +519,41 @@ export const QuizEditorPage: React.FC = () => {
 			isCorrect: i === index,
 		}));
 		setEditingQuestion({ ...editingQuestion, answers: newAnswers, correctAnswer: index });
+	};
+
+	// Team configuration functions
+	const toggleGameMode = (mode: GameMode) => {
+		const newTeamConfig = { ...catalog.teamConfig, enabled: mode === 'team' };
+		setCatalog({ ...catalog, gameMode: mode, teamConfig: newTeamConfig });
+	};
+
+	const addTeam = () => {
+		const newTeam = createTeamDefinition(catalog.teamConfig.teams.length);
+		const updatedTeams = [...catalog.teamConfig.teams, newTeam];
+		setCatalog({
+			...catalog,
+			teamConfig: { ...catalog.teamConfig, teams: updatedTeams },
+		});
+	};
+
+	const removeTeam = (teamId: string) => {
+		if (catalog.teamConfig.teams.length <= 2) {
+			alert('Mindestens 2 Teams erforderlich');
+			return;
+		}
+		const updatedTeams = catalog.teamConfig.teams.filter((t) => t.id !== teamId);
+		setCatalog({
+			...catalog,
+			teamConfig: { ...catalog.teamConfig, teams: updatedTeams },
+		});
+	};
+
+	const updateTeam = (teamId: string, field: keyof TeamDefinition, value: string) => {
+		const updatedTeams = catalog.teamConfig.teams.map((t) => (t.id === teamId ? { ...t, [field]: value } : t));
+		setCatalog({
+			...catalog,
+			teamConfig: { ...catalog.teamConfig, teams: updatedTeams },
+		});
 	};
 
 	const exportToBattlenet = async () => {
@@ -621,6 +799,8 @@ export const QuizEditorPage: React.FC = () => {
 				title,
 				description,
 				questions,
+				gameMode: 'free-for-all',
+				teamConfig: createDefaultTeamConfig(),
 			});
 
 			alert(`Quiz "${title}" erfolgreich importiert! (${questions.length} Fragen)`);
@@ -636,216 +816,633 @@ export const QuizEditorPage: React.FC = () => {
 	};
 
 	return (
-		<Layout
-			header={
-				<HeaderContent>
-					<HeaderLeft>
-						<Button variant="ghost" size="sm" leftIcon={<FiArrowLeft />} onClick={() => navigate('/')}>
-							<Trans id="common.back">Zurück</Trans>
-						</Button>
-						<Title>
-							<Trans id="quizEditor.title">Quiz-Editor</Trans>
-						</Title>
-					</HeaderLeft>
-					<HeaderActions>
-						<Button variant="outline" size="sm" leftIcon={<FiFile />} onClick={createNewQuiz}>
-							<Trans id="quizEditor.newQuiz">Neues Quiz</Trans>
-						</Button>
-						<Button variant="outline" size="sm" leftIcon={<FiFolder />} onClick={() => setShowLoadModal(true)}>
-							<Trans id="common.load">Laden</Trans>
-						</Button>
-						<Button variant="primary" size="sm" leftIcon={<FiSave />} onClick={saveToBackend} disabled={saving || catalog.questions.length === 0}>
-							{saving ? <Trans id="common.saving">Speichern...</Trans> : savedQuizId ? <Trans id="common.update">Aktualisieren</Trans> : <Trans id="common.save">Speichern</Trans>}
-						</Button>
-						<Button variant="outline" size="sm" leftIcon={<FiDownload />} onClick={exportToBattlenet}>
-							<Trans id="common.export">Exportieren</Trans>
-						</Button>
-						<input ref={fileInputRef} type="file" accept=".battlenet,.battlenet.zip,.zip" onChange={importFromBattlenet} style={{ display: 'none' }} />
-						<Button variant="outline" size="sm" leftIcon={<FiUpload />} onClick={handleImportClick}>
-							<Trans id="common.import">Importieren</Trans>
-						</Button>
-					</HeaderActions>
-				</HeaderContent>
-			}
-		>
-			<Container>
-				<CatalogInfo>
-					<Input label="Quiz-Titel" value={catalog.title} onChange={(e) => setCatalog({ ...catalog, title: e.target.value })} placeholder="Gib deinem Quiz einen Titel" fullWidth />
-					<Input label="Beschreibung" value={catalog.description} onChange={(e) => setCatalog({ ...catalog, description: e.target.value })} placeholder="Beschreibe dein Quiz" fullWidth />
-				</CatalogInfo>
-
-				<QuestionsList>
-					<ListHeader>
-						<h2>
-							<Trans id="common.questions">Fragen</Trans> ({catalog.questions.length})
-						</h2>
-						<Button leftIcon={<FiPlus />} onClick={addQuestion}>
-							<Trans id="quizEditor.addQuestion">Frage hinzufügen</Trans>
-						</Button>
-					</ListHeader>
-
-					{catalog.questions.length === 0 ? (
-						<EmptyState>
-							<Icon name="clipboard" size="2xl" color="neutral" />
-							<EmptyTitle>
-								<Trans id="quizEditor.noQuestionsYet">Noch keine Fragen</Trans>
-							</EmptyTitle>
-							<EmptyText>
-								<Trans id="quizEditor.createFirstQuestionHint">Erstelle deine erste Frage, um mit dem Quiz zu beginnen</Trans>
-							</EmptyText>
-							<Button leftIcon={<FiPlus />} onClick={addQuestion}>
-								<Trans id="quizEditor.createFirstQuestion">Erste Frage erstellen</Trans>
+		<div className={styles.pageContainer}>
+			<Layout
+				header={
+					<div className={styles.header}>
+						<div className={styles.headerLeft}>
+							<Button variant="ghost" size="sm" leftIcon={<FiArrowLeft />} onClick={() => navigate('/')}>
+								<Trans id="common.back">Zurück</Trans>
 							</Button>
-						</EmptyState>
-					) : (
-						<QuestionsTable>
-							{catalog.questions.map((question, index) => (
-								<QuestionRow key={question.id} draggable onDragStart={(e) => handleDragStart(e, index)} onDragEnd={handleDragEnd} onDragOver={handleDragOver} onDrop={(e) => handleDrop(e, index)}>
-									<DragHandle title="Ziehen zum Neu-Sortieren">
-										<FiMenu />
-									</DragHandle>
+							<h1 className={styles.title}>
+								<Trans id="quizEditor.title">Quiz-Editor</Trans>
+							</h1>
+						</div>
+						<div className={styles.headerActions}>
+							<Button variant="outline" size="sm" leftIcon={<FiFile />} onClick={createNewQuiz}>
+								<Trans id="quizEditor.newQuiz">Neues Quiz</Trans>
+							</Button>
+							<Button variant="outline" size="sm" leftIcon={<FiFolder />} onClick={() => setShowLoadModal(true)}>
+								<Trans id="common.load">Laden</Trans>
+							</Button>
+							<Button variant="primary" size="sm" leftIcon={<FiSave />} onClick={saveToBackend} disabled={saving || catalog.questions.length === 0}>
+								{saving ? <Trans id="common.saving">Speichern...</Trans> : savedQuizId ? <Trans id="common.update">Aktualisieren</Trans> : <Trans id="common.save">Speichern</Trans>}
+							</Button>
+							<Button variant="outline" size="sm" leftIcon={<FiDownload />} onClick={exportToBattlenet}>
+								<Trans id="common.export">Exportieren</Trans>
+							</Button>
+							<input ref={fileInputRef} type="file" accept=".battlenet,.battlenet.zip,.zip" onChange={importFromBattlenet} style={{ display: 'none' }} />
+							<Button variant="outline" size="sm" leftIcon={<FiUpload />} onClick={handleImportClick}>
+								<Trans id="common.import">Importieren</Trans>
+							</Button>
+						</div>
+					</div>
+				}
+			>
+				<div className={styles.container}>
+					<div className={styles.catalogInfo}>
+						<Input label="Quiz-Titel" value={catalog.title} onChange={(e) => setCatalog({ ...catalog, title: e.target.value })} placeholder="Gib deinem Quiz einen Titel" fullWidth />
+						<Input label="Beschreibung" value={catalog.description} onChange={(e) => setCatalog({ ...catalog, description: e.target.value })} placeholder="Beschreibe dein Quiz" fullWidth />
+					</div>
 
-									<QuestionNumber>{index + 1}</QuestionNumber>
+					{/* Game Mode Selection */}
+					<div className={styles.gameModeSection}>
+						<div className={styles.gameModeHeader}>
+							<FiUsers size={20} />
+							<Trans id="quizEditor.gameMode">Spielmodus</Trans>
+						</div>
+						<GameModeSelectorComponent value={catalog.gameMode} onChange={toggleGameMode} />
 
-									<QuestionTypeTag type={question.type}>
-										{question.type === 'multiple-choice' && 'MC'}
-										{question.type === 'true-false' && 'T/F'}
-										{question.type === 'text' && 'Text'}
-										{question.type === 'buzzer' && 'Buzzer'}
-										{question.type === 'slider' && 'Slider'}
-										{question.type === 'hotspot' && 'Hotspot'}
-										{question.type === 'sorting' && 'Sort'}
-									</QuestionTypeTag>
+						{/* Team Configuration (only visible in team mode) */}
+						{catalog.gameMode === 'team' && <TeamConfigEditor config={catalog.teamConfig} onUpdateTeam={updateTeam} onAddTeam={addTeam} onRemoveTeam={removeTeam} />}
+					</div>
 
-									<QuestionTextCell onClick={() => editQuestion(question)}>
-										<QuestionTextMain>{question.question || <Trans id="quizEditor.untitled">Ohne Titel</Trans>}</QuestionTextMain>
-										<QuestionTextSub>
-											{question.type === 'multiple-choice' && question.answers.length > 0 && (
-												<>
-													<Icon name="check" size="xs" color="success" /> {question.answers.find((a) => a.isCorrect)?.text || 'Nicht festgelegt'}
-												</>
-											)}
-											{question.type === 'true-false' && (
-												<>
-													<Icon name="check" size="xs" color="success" /> {question.correctAnswer === 1 ? 'Wahr' : 'Falsch'}
-												</>
-											)}
-											{(question.type === 'text' || question.type === 'buzzer') && question.correctAnswerText && (
-												<>
-													<Icon name="check" size="xs" color="success" /> {question.correctAnswerText}
-												</>
-											)}
-											{question.type === 'slider' && (
-												<>
-													<Icon name="check" size="xs" color="success" /> {question.sliderCorrectValue}
-													{question.sliderUnit ? ` ${question.sliderUnit}` : ''} ({question.sliderMin}-{question.sliderMax})
-												</>
-											)}
-											{question.type === 'hotspot' && (question.imageData || question.imageUrl) && (
-												<>
-													<Icon name="check" size="xs" color="success" /> Markierung bei {question.hotspotX?.toFixed(0)}%, {question.hotspotY?.toFixed(0)}%
-												</>
-											)}
-											{question.type === 'hotspot' && !(question.imageData || question.imageUrl) && (
-												<>
-													<Icon name="alert-triangle" size="xs" color="warning" /> Bild erforderlich
-												</>
-											)}
-											{question.type === 'sorting' && question.sortingItems && (
-												<>
-													<Icon name="check" size="xs" color="success" /> {question.sortingItems.length} Elemente
-												</>
-											)}
-										</QuestionTextSub>
-									</QuestionTextCell>
+					<div className={styles.questionsSection}>
+						<div className={styles.questionsHeader}>
+							<h2>
+								<Trans id="common.questions">Fragen</Trans> ({catalog.questions.length})
+							</h2>
+							<Button leftIcon={<FiPlus />} onClick={addQuestion}>
+								<Trans id="quizEditor.addQuestion">Frage hinzufügen</Trans>
+							</Button>
+						</div>
 
-									<PointsCell>{question.points}</PointsCell>
+						{catalog.questions.length === 0 ? (
+							<div className={styles.emptyState}>
+								<Icon name="clipboard" size="2xl" color="neutral" />
+								<h3 className={styles.emptyTitle}>
+									<Trans id="quizEditor.noQuestionsYet">Noch keine Fragen</Trans>
+								</h3>
+								<p className={styles.emptyText}>
+									<Trans id="quizEditor.createFirstQuestionHint">Erstelle deine erste Frage, um mit dem Quiz zu beginnen</Trans>
+								</p>
+								<Button leftIcon={<FiPlus />} onClick={addQuestion}>
+									<Trans id="quizEditor.createFirstQuestion">Erste Frage erstellen</Trans>
+								</Button>
+							</div>
+						) : (
+							<div className={styles.questionsTable}>
+								{catalog.questions.map((question, index) => (
+									<QuestionRow key={question.id} draggable onDragStart={(e) => handleDragStart(e, index)} onDragEnd={handleDragEnd} onDragOver={handleDragOver} onDrop={(e) => handleDrop(e, index)}>
+										<DragHandle title="Ziehen zum Neu-Sortieren">
+											<FiMenu />
+										</DragHandle>
 
-									<ActionsCell>
-										<IconButton onClick={() => editQuestion(question)} title="Bearbeiten">
-											<FiEdit2 />
-										</IconButton>
-										<IconButton onClick={() => deleteQuestion(question.id)} title="Löschen" danger>
-											<FiTrash2 />
-										</IconButton>
-									</ActionsCell>
-								</QuestionRow>
-							))}
-						</QuestionsTable>
-					)}
-				</QuestionsList>
-			</Container>
+										<QuestionNumber>{index + 1}</QuestionNumber>
 
-			{/* Question Editor Modal */}
-			<Modal isOpen={showQuestionModal} onClose={() => setShowQuestionModal(false)} title="Frage bearbeiten" size="lg" closeOnOverlayClick={false}>
-				{editingQuestion && (
-					<EditorForm>
-						<FormRow>
+										<QuestionTypeTag type={question.type}>
+											{question.type === 'multiple-choice' && 'MC'}
+											{question.type === 'true-false' && 'W/F'}
+											{question.type === 'text' && 'TXT'}
+											{question.type === 'buzzer' && 'BZR'}
+											{question.type === 'slider' && 'SLD'}
+											{question.type === 'hotspot' && 'HSP'}
+											{question.type === 'sorting' && 'SRT'}
+											{question.type === 'matching' && 'MTH'}
+											{question.type === 'audio' && 'AUD'}
+											{question.type === 'image-choice' && 'IMG'}
+											{question.type === 'geolocation' && 'GEO'}
+										</QuestionTypeTag>
+										<QuestionTextCell onClick={() => editQuestion(question)}>
+											<QuestionTextMain>{question.question || <Trans id="quizEditor.untitled">Ohne Titel</Trans>}</QuestionTextMain>
+											<QuestionTextSub>
+												{question.type === 'multiple-choice' && question.answers.length > 0 && (
+													<>
+														<Icon name="check" size="xs" color="success" /> {question.answers.find((a) => a.isCorrect)?.text || 'Nicht festgelegt'}
+													</>
+												)}
+												{question.type === 'true-false' && (
+													<>
+														<Icon name="check" size="xs" color="success" /> {question.correctAnswer === 1 ? 'Wahr' : 'Falsch'}
+													</>
+												)}
+												{(question.type === 'text' || question.type === 'buzzer') && question.correctAnswerText && (
+													<>
+														<Icon name="check" size="xs" color="success" /> {question.correctAnswerText}
+													</>
+												)}
+												{question.type === 'slider' && (
+													<>
+														<Icon name="check" size="xs" color="success" /> {question.sliderCorrectValue}
+														{question.sliderUnit ? ` ${question.sliderUnit}` : ''} ({question.sliderMin}-{question.sliderMax})
+													</>
+												)}
+												{question.type === 'hotspot' && (question.imageData || question.imageUrl) && (
+													<>
+														<Icon name="check" size="xs" color="success" /> Markierung bei {question.hotspotX?.toFixed(0)}%, {question.hotspotY?.toFixed(0)}%
+													</>
+												)}
+												{question.type === 'hotspot' && !(question.imageData || question.imageUrl) && (
+													<>
+														<Icon name="alert-triangle" size="xs" color="warning" /> Bild erforderlich
+													</>
+												)}
+												{question.type === 'sorting' && question.sortingItems && (
+													<>
+														<Icon name="check" size="xs" color="success" /> {question.sortingItems.length} Elemente
+													</>
+												)}
+												{question.type === 'matching' && question.matchingPairs && (
+													<>
+														<Icon name="check" size="xs" color="success" /> {question.matchingPairs.length} Paare
+													</>
+												)}
+												{question.type === 'audio' && (
+													<>
+														{question.audioUrl || question.audioData ? (
+															<>
+																<Icon name="check" size="xs" color="success" /> {question.audioMaxPlays || 3}x abspielen
+															</>
+														) : (
+															<>
+																<Icon name="alert-triangle" size="xs" color="warning" /> Audio erforderlich
+															</>
+														)}
+													</>
+												)}
+												{question.type === 'image-choice' && question.imageOptions && (
+													<>
+														<Icon name="check" size="xs" color="success" /> {question.imageOptions.length} Bilder
+													</>
+												)}
+												{question.type === 'geolocation' && (
+													<>
+														<Icon name="check" size="xs" color="success" /> {question.geoMode === 'map' ? 'Karte' : 'Bild'} ({question.geoTolerance || 5}% Toleranz)
+													</>
+												)}
+											</QuestionTextSub>
+										</QuestionTextCell>
+
+										<PointsCell>{question.points}</PointsCell>
+
+										<ActionsCell>
+											<IconButton onClick={() => editQuestion(question)} title="Bearbeiten">
+												<FiEdit2 />
+											</IconButton>
+											<IconButton onClick={() => deleteQuestion(question.id)} title="Löschen" danger>
+												<FiTrash2 />
+											</IconButton>
+										</ActionsCell>
+									</QuestionRow>
+								))}
+							</div>
+						)}
+					</div>
+				</div>
+
+				{/* Question Editor Modal */}
+				<Modal isOpen={showQuestionModal} onClose={() => setShowQuestionModal(false)} title="Frage bearbeiten" size="lg" closeOnOverlayClick={false}>
+					{editingQuestion && (
+						<EditorForm>
+							<FormRow>
+								<FormGroup>
+									<label>
+										<Trans id="quizEditor.questionType">Fragetyp</Trans>
+									</label>
+									<select value={editingQuestion.type} onChange={(e) => updateQuestionField('type', e.target.value)}>
+										<option value="multiple-choice">Multiple Choice</option>
+										<option value="true-false">Wahr/Falsch</option>
+										<option value="text">Texteingabe</option>
+										<option value="buzzer">Buzzer</option>
+										<option value="slider">Slider (Schätzfrage)</option>
+										<option value="hotspot">Hotspot (Bildmarkierung)</option>
+										<option value="sorting">Sortieraufgabe</option>
+										<option value="matching">Paarzuordnung</option>
+										<option value="audio">Audiofrage</option>
+										<option value="image-choice">Bildauswahl</option>
+										<option value="geolocation">Geolocation</option>
+									</select>
+								</FormGroup>
+							</FormRow>
+
+							<FormGroup>
+								<Input label="Frage" value={editingQuestion.question} onChange={(e) => updateQuestionField('question', e.target.value)} placeholder="Stelle deine Frage..." fullWidth />
+							</FormGroup>
+
+							{/* Image Upload Section */}
 							<FormGroup>
 								<label>
-									<Trans id="quizEditor.questionType">Fragetyp</Trans>
+									<Trans id="quizEditor.imageOptional">Bild (optional)</Trans>
 								</label>
-								<select value={editingQuestion.type} onChange={(e) => updateQuestionField('type', e.target.value)}>
-									<option value="multiple-choice">Multiple Choice</option>
-									<option value="true-false">Wahr/Falsch</option>
-									<option value="text">Texteingabe</option>
-									<option value="buzzer">Buzzer</option>
-									<option value="slider">Slider (Schätzfrage)</option>
-									<option value="hotspot">Hotspot (Bildmarkierung)</option>
-									<option value="sorting">Sortieraufgabe</option>
-								</select>
+								<ImageUploadContainer>
+									{editingQuestion.imageData || editingQuestion.imageUrl ? (
+										<ImagePreviewContainer>
+											<ImagePreview src={editingQuestion.imageData || editingQuestion.imageUrl} alt="Fragebild" />
+											<RemoveImageButton
+												onClick={() => {
+													if (editingQuestion) {
+														setEditingQuestion({ ...editingQuestion, imageData: undefined, imageUrl: undefined });
+													}
+												}}
+											>
+												<FiTrash2 /> <Trans id="common.remove">Entfernen</Trans>
+											</RemoveImageButton>
+										</ImagePreviewContainer>
+									) : (
+										<>
+											<ImageDropZone
+												onDragOver={(e) => {
+													e.preventDefault();
+													e.stopPropagation();
+												}}
+												onDrop={(e) => {
+													e.preventDefault();
+													e.stopPropagation();
+													const file = e.dataTransfer.files[0];
+													if (file && file.type.startsWith('image/')) {
+														const reader = new FileReader();
+														reader.onload = (ev) => {
+															updateQuestionField('imageData', ev.target?.result as string);
+														};
+														reader.readAsDataURL(file);
+													}
+												}}
+											>
+												<FiImage size={32} />
+												<span>
+													<Trans id="quizEditor.dragImageHere">Bild hierher ziehen oder</Trans>
+												</span>
+												<ImageUploadLabel>
+													<input
+														type="file"
+														accept="image/*"
+														style={{ display: 'none' }}
+														onChange={(e) => {
+															const file = e.target.files?.[0];
+															if (file) {
+																const reader = new FileReader();
+																reader.onload = (ev) => {
+																	updateQuestionField('imageData', ev.target?.result as string);
+																};
+																reader.readAsDataURL(file);
+															}
+														}}
+													/>
+													<Trans id="quizEditor.selectFile">Datei auswählen</Trans>
+												</ImageUploadLabel>
+											</ImageDropZone>
+											<div style={{ textAlign: 'center', margin: '8px 0' }}>
+												<Trans id="common.or">oder</Trans>
+											</div>
+											<Input label="" value={editingQuestion.imageUrl || ''} onChange={(e) => updateQuestionField('imageUrl', e.target.value)} placeholder="Bild-URL eingeben..." fullWidth />
+										</>
+									)}
+								</ImageUploadContainer>
 							</FormGroup>
-						</FormRow>
 
-						<FormGroup>
-							<Input label="Frage" value={editingQuestion.question} onChange={(e) => updateQuestionField('question', e.target.value)} placeholder="Stelle deine Frage..." fullWidth />
-						</FormGroup>
+							{editingQuestion.type === 'multiple-choice' && (
+								<AnswersSection>
+									<label>
+										<Trans id="quizEditor.answersLabel">Antworten (Wähle die korrekte Antwort)</Trans>
+									</label>
+									{editingQuestion.answers.map((answer, index) => (
+										<AnswerRow key={answer.id} isCorrect={answer.isCorrect}>
+											<CorrectRadio type="radio" name="correctAnswer" checked={answer.isCorrect} onChange={() => setCorrectAnswer(index)} title="Als korrekte Antwort markieren" />
+											<CorrectLabel isCorrect={answer.isCorrect}>
+												{answer.isCorrect ? (
+													<>
+														<Icon name="check" size="xs" color="success" /> <Trans id="quizEditor.markedCorrect">Korrekt</Trans>
+													</>
+												) : (
+													<Trans id="quizEditor.answerNumber">Antwort {index + 1}</Trans>
+												)}
+											</CorrectLabel>
+											<Input value={answer.text} onChange={(e) => updateAnswer(index, e.target.value)} placeholder={`Antwort ${index + 1}`} fullWidth />
+										</AnswerRow>
+									))}
+								</AnswersSection>
+							)}
 
-						{/* Image Upload Section */}
-						<FormGroup>
-							<label>
-								<Trans id="quizEditor.imageOptional">Bild (optional)</Trans>
-							</label>
-							<ImageUploadContainer>
-								{editingQuestion.imageData || editingQuestion.imageUrl ? (
-									<ImagePreviewContainer>
-										<ImagePreview src={editingQuestion.imageData || editingQuestion.imageUrl} alt="Fragebild" />
-										<RemoveImageButton
-											onClick={() => {
-												if (editingQuestion) {
-													setEditingQuestion({ ...editingQuestion, imageData: undefined, imageUrl: undefined });
-												}
-											}}
-										>
-											<FiTrash2 /> <Trans id="common.remove">Entfernen</Trans>
-										</RemoveImageButton>
-									</ImagePreviewContainer>
-								) : (
-									<>
-										<ImageDropZone
-											onDragOver={(e) => {
-												e.preventDefault();
-												e.stopPropagation();
-											}}
-											onDrop={(e) => {
-												e.preventDefault();
-												e.stopPropagation();
-												const file = e.dataTransfer.files[0];
-												if (file && file.type.startsWith('image/')) {
-													const reader = new FileReader();
-													reader.onload = (ev) => {
-														updateQuestionField('imageData', ev.target?.result as string);
-													};
-													reader.readAsDataURL(file);
-												}
-											}}
-										>
-											<FiImage size={32} />
+							{editingQuestion.type === 'true-false' && (
+								<FormGroup>
+									<label>
+										<Trans id="quizEditor.correctAnswer">Korrekte Antwort</Trans>
+									</label>
+									<TrueFalseOptions>
+										<TrueFalseOption selected={editingQuestion.correctAnswer === 1} onClick={() => updateQuestionField('correctAnswer', 1)}>
+											<input type="radio" checked={editingQuestion.correctAnswer === 1} readOnly />
 											<span>
-												<Trans id="quizEditor.dragImageHere">Bild hierher ziehen oder</Trans>
+												<Trans id="quizEditor.trueOption">Wahr (True)</Trans>
 											</span>
-											<ImageUploadLabel>
+										</TrueFalseOption>
+										<TrueFalseOption selected={editingQuestion.correctAnswer === 0} onClick={() => updateQuestionField('correctAnswer', 0)}>
+											<input type="radio" checked={editingQuestion.correctAnswer === 0} readOnly />
+											<span>
+												<Trans id="quizEditor.falseOption">Falsch (False)</Trans>
+											</span>
+										</TrueFalseOption>
+									</TrueFalseOptions>
+								</FormGroup>
+							)}
+
+							{editingQuestion.type === 'text' && (
+								<>
+									<FormGroup>
+										<label>
+											<Trans id="quizEditor.inputType">Eingabetyp</Trans>
+										</label>
+										<select value={editingQuestion.textInputType || 'text'} onChange={(e) => updateQuestionField('textInputType', e.target.value)}>
+											<option value="text">Text</option>
+											<option value="number">
+												<Trans id="quizEditor.numbersOnly">Nur Zahlen</Trans>
+											</option>
+										</select>
+									</FormGroup>
+									<FormGroup>
+										<Input label="Korrekte Antwort" type={editingQuestion.textInputType || 'text'} value={editingQuestion.correctAnswerText || ''} onChange={(e) => updateQuestionField('correctAnswerText', e.target.value)} placeholder="Gib die korrekte Antwort ein..." fullWidth />
+									</FormGroup>
+								</>
+							)}
+
+							{editingQuestion.type === 'buzzer' && (
+								<FormGroup>
+									<Input label="Korrekte Antwort" value={editingQuestion.correctAnswerText || ''} onChange={(e) => updateQuestionField('correctAnswerText', e.target.value)} placeholder="Gib die korrekte Antwort ein..." fullWidth />
+								</FormGroup>
+							)}
+
+							{editingQuestion.type === 'slider' && (
+								<>
+									<FormRow>
+										<FormGroup>
+											<Input label="Minimum" type="number" value={editingQuestion.sliderMin ?? 0} onChange={(e) => updateQuestionField('sliderMin', parseFloat(e.target.value) || 0)} fullWidth />
+										</FormGroup>
+										<FormGroup>
+											<Input label="Maximum" type="number" value={editingQuestion.sliderMax ?? 100} onChange={(e) => updateQuestionField('sliderMax', parseFloat(e.target.value) || 100)} fullWidth />
+										</FormGroup>
+									</FormRow>
+									<FormRow>
+										<FormGroup>
+											<Input label="Schrittweite" type="number" value={editingQuestion.sliderStep ?? 1} onChange={(e) => updateQuestionField('sliderStep', parseFloat(e.target.value) || 1)} placeholder="z.B. 0.1, 0.5, 1" fullWidth />
+										</FormGroup>
+										<FormGroup>
+											<Input label="Einheit (optional)" type="text" value={editingQuestion.sliderUnit || ''} onChange={(e) => updateQuestionField('sliderUnit', e.target.value)} placeholder="z.B. km, Jahre, €" fullWidth />
+										</FormGroup>
+									</FormRow>
+									<FormGroup>
+										<Input label="Korrekte Antwort" type="number" value={editingQuestion.sliderCorrectValue ?? 50} onChange={(e) => updateQuestionField('sliderCorrectValue', parseFloat(e.target.value) || 0)} fullWidth />
+										<SliderPreview>
+											<SliderPreviewLabel>Vorschau:</SliderPreviewLabel>
+											<SliderPreviewValue>
+												{editingQuestion.sliderCorrectValue ?? 50}
+												{editingQuestion.sliderUnit ? ` ${editingQuestion.sliderUnit}` : ''}
+											</SliderPreviewValue>
+											<SliderPreviewRange>
+												(von {editingQuestion.sliderMin ?? 0} bis {editingQuestion.sliderMax ?? 100})
+											</SliderPreviewRange>
+										</SliderPreview>
+									</FormGroup>
+								</>
+							)}
+
+							{editingQuestion.type === 'hotspot' && (
+								<>
+									{editingQuestion.imageData || editingQuestion.imageUrl ? (
+										<FormGroup>
+											<label>Korrekte Position markieren (Klicke auf das Bild)</label>
+											<HotspotEditorContainer>
+												<HotspotImageWrapper>
+													<HotspotEditorImage
+														src={editingQuestion.imageData || editingQuestion.imageUrl}
+														alt="Hotspot Bild"
+														onClick={(e) => {
+															const rect = e.currentTarget.getBoundingClientRect();
+															const x = ((e.clientX - rect.left) / rect.width) * 100;
+															const y = ((e.clientY - rect.top) / rect.height) * 100;
+															setEditingQuestion({
+																...editingQuestion,
+																hotspotX: Math.max(0, Math.min(100, x)),
+																hotspotY: Math.max(0, Math.min(100, y)),
+															});
+														}}
+													/>
+													{editingQuestion.hotspotX !== undefined && editingQuestion.hotspotY !== undefined && (
+														<HotspotMarker
+															style={{
+																left: `${editingQuestion.hotspotX}%`,
+																top: `${editingQuestion.hotspotY}%`,
+															}}
+														/>
+													)}
+												</HotspotImageWrapper>
+											</HotspotEditorContainer>
+											<HotspotCoords>
+												Position: X = {editingQuestion.hotspotX?.toFixed(1)}%, Y = {editingQuestion.hotspotY?.toFixed(1)}%
+											</HotspotCoords>
+										</FormGroup>
+									) : (
+										<FormGroup>
+											<HotspotWarning>⚠️ Bitte lade zuerst ein Bild hoch, um die korrekte Position zu markieren.</HotspotWarning>
+										</FormGroup>
+									)}
+									<FormGroup>
+										<label>Optionen</label>
+										<CheckboxRow>
+											<input type="checkbox" checked={editingQuestion.hotspotAllowZoom ?? true} onChange={(e) => updateQuestionField('hotspotAllowZoom', e.target.checked)} id="allowZoom" />
+											<label htmlFor="allowZoom">Zoom erlauben (Spieler können das Bild vergrößern)</label>
+										</CheckboxRow>
+									</FormGroup>
+								</>
+							)}
+
+							{editingQuestion.type === 'sorting' && (
+								<FormGroup>
+									<label>Elemente (in korrekter Reihenfolge)</label>
+									<SortingItemsContainer>
+										{(editingQuestion.sortingItems || []).map((item, index) => (
+											<SortingItemRow key={index}>
+												<SortingItemNumber>{index + 1}.</SortingItemNumber>
+												<Input
+													value={item}
+													onChange={(e) => {
+														const newItems = [...(editingQuestion.sortingItems || [])];
+														newItems[index] = e.target.value;
+														updateQuestionField('sortingItems', newItems);
+													}}
+													placeholder={`Element ${index + 1}`}
+													fullWidth
+												/>
+												<IconButton
+													onClick={() => {
+														const newItems = (editingQuestion.sortingItems || []).filter((_, i) => i !== index);
+														updateQuestionField('sortingItems', newItems.length > 0 ? newItems : ['Element 1']);
+													}}
+													title="Entfernen"
+													danger
+													disabled={(editingQuestion.sortingItems || []).length <= 2}
+												>
+													<FiTrash2 />
+												</IconButton>
+											</SortingItemRow>
+										))}
+										<Button
+											variant="outline"
+											size="sm"
+											leftIcon={<FiPlus />}
+											onClick={() => {
+												const newItems = [...(editingQuestion.sortingItems || []), `Element ${(editingQuestion.sortingItems || []).length + 1}`];
+												updateQuestionField('sortingItems', newItems);
+											}}
+										>
+											Element hinzufügen
+										</Button>
+									</SortingItemsContainer>
+									<SortingHint>Die Elemente werden den Spielern in zufälliger Reihenfolge angezeigt. Sie müssen sie in die hier definierte korrekte Reihenfolge bringen.</SortingHint>
+								</FormGroup>
+							)}
+
+							{/* Matching Question Editor */}
+							{editingQuestion.type === 'matching' && (
+								<FormGroup>
+									<label>Paare (linke Seite → rechte Seite)</label>
+									<SortingItemsContainer>
+										{(editingQuestion.matchingPairs || []).map((pair, index) => (
+											<MatchingPairRow key={pair.id || index}>
+												<Input
+													value={pair.left}
+													onChange={(e) => {
+														const newPairs = [...(editingQuestion.matchingPairs || [])];
+														newPairs[index] = { ...newPairs[index], left: e.target.value };
+														updateQuestionField('matchingPairs', newPairs);
+													}}
+													placeholder="Begriff"
+													fullWidth
+												/>
+												<MatchingArrow>→</MatchingArrow>
+												<Input
+													value={pair.right}
+													onChange={(e) => {
+														const newPairs = [...(editingQuestion.matchingPairs || [])];
+														newPairs[index] = { ...newPairs[index], right: e.target.value };
+														updateQuestionField('matchingPairs', newPairs);
+													}}
+													placeholder="Zuordnung"
+													fullWidth
+												/>
+												<IconButton
+													onClick={() => {
+														const newPairs = (editingQuestion.matchingPairs || []).filter((_, i) => i !== index);
+														updateQuestionField('matchingPairs', newPairs);
+													}}
+													title="Entfernen"
+													danger
+													disabled={(editingQuestion.matchingPairs || []).length <= 2}
+												>
+													<FiTrash2 />
+												</IconButton>
+											</MatchingPairRow>
+										))}
+										<Button
+											variant="outline"
+											size="sm"
+											leftIcon={<FiPlus />}
+											onClick={() => {
+												const newPairs = [...(editingQuestion.matchingPairs || []), { id: Date.now().toString(), left: '', right: '' }];
+												updateQuestionField('matchingPairs', newPairs);
+											}}
+										>
+											Paar hinzufügen
+										</Button>
+									</SortingItemsContainer>
+								</FormGroup>
+							)}
+
+							{/* Audio Question Editor */}
+							{editingQuestion.type === 'audio' && (
+								<>
+									<FormGroup>
+										<label>Audio-Datei</label>
+										<AudioUploadContainer>
+											{editingQuestion.audioData || editingQuestion.audioUrl ? (
+												<AudioPreviewContainer>
+													<audio controls src={editingQuestion.audioData || editingQuestion.audioUrl} style={{ width: '100%' }} />
+													<RemoveImageButton
+														onClick={() => {
+															updateQuestionField('audioData', undefined);
+															updateQuestionField('audioUrl', undefined);
+														}}
+													>
+														<FiTrash2 />
+													</RemoveImageButton>
+												</AudioPreviewContainer>
+											) : (
+												<UploadButton onClick={() => document.getElementById('audio-upload')?.click()}>🎵 Audio hochladen</UploadButton>
+											)}
+											<input
+												id="audio-upload"
+												type="file"
+												accept="audio/*"
+												style={{ display: 'none' }}
+												onChange={(e) => {
+													const file = e.target.files?.[0];
+													if (file) {
+														const reader = new FileReader();
+														reader.onload = (event) => {
+															updateQuestionField('audioData', event.target?.result as string);
+														};
+														reader.readAsDataURL(file);
+													}
+												}}
+											/>
+										</AudioUploadContainer>
+									</FormGroup>
+									<FormRow>
+										<FormGroup>
+											<Input label="Maximale Wiedergaben" type="number" value={editingQuestion.audioMaxPlays || 3} onChange={(e) => updateQuestionField('audioMaxPlays', parseInt(e.target.value))} min={1} />
+										</FormGroup>
+										<FormGroup>
+											<label>Antwortmodus</label>
+											<select value={editingQuestion.audioAnswerMode || 'text'} onChange={(e) => updateQuestionField('audioAnswerMode', e.target.value)}>
+												<option value="text">Texteingabe</option>
+												<option value="multiple-choice">Multiple Choice</option>
+											</select>
+										</FormGroup>
+									</FormRow>
+									<FormGroup>
+										<Input label="Transkript (optional)" value={editingQuestion.audioTranscript || ''} onChange={(e) => updateQuestionField('audioTranscript', e.target.value)} placeholder="Optionales Transkript für Barrierefreiheit..." fullWidth />
+									</FormGroup>
+								</>
+							)}
+
+							{/* Image Choice Question Editor */}
+							{editingQuestion.type === 'image-choice' && (
+								<FormGroup>
+									<label>Bildoptionen</label>
+									<ImageOptionsGrid>
+										{(editingQuestion.imageOptions || []).map((option, index) => (
+											<ImageOptionCard key={option.id || index}>
+												{option.imageData || option.imageUrl ? (
+													<ImageOptionPreview>
+														<img src={option.imageData || option.imageUrl} alt={option.alt} />
+														<ImageOptionOverlay>
+															<IconButton
+																onClick={() => {
+																	const newOptions = (editingQuestion.imageOptions || []).filter((_, i) => i !== index);
+																	updateQuestionField('imageOptions', newOptions);
+																}}
+																danger
+															>
+																<FiTrash2 />
+															</IconButton>
+														</ImageOptionOverlay>
+													</ImageOptionPreview>
+												) : (
+													<ImageOptionUpload onClick={() => document.getElementById(`img-option-${index}`)?.click()}>
+														<FiImage size={24} />
+														<span>Bild {String.fromCharCode(65 + index)}</span>
+													</ImageOptionUpload>
+												)}
 												<input
+													id={`img-option-${index}`}
 													type="file"
 													accept="image/*"
 													style={{ display: 'none' }}
@@ -853,274 +1450,171 @@ export const QuizEditorPage: React.FC = () => {
 														const file = e.target.files?.[0];
 														if (file) {
 															const reader = new FileReader();
-															reader.onload = (ev) => {
-																updateQuestionField('imageData', ev.target?.result as string);
+															reader.onload = (event) => {
+																const newOptions = [...(editingQuestion.imageOptions || [])];
+																newOptions[index] = { ...newOptions[index], imageData: event.target?.result as string };
+																updateQuestionField('imageOptions', newOptions);
 															};
 															reader.readAsDataURL(file);
 														}
 													}}
 												/>
-												<Trans id="quizEditor.selectFile">Datei auswählen</Trans>
-											</ImageUploadLabel>
-										</ImageDropZone>
-										<div style={{ textAlign: 'center', margin: '8px 0' }}>
-											<Trans id="common.or">oder</Trans>
-										</div>
-										<Input label="" value={editingQuestion.imageUrl || ''} onChange={(e) => updateQuestionField('imageUrl', e.target.value)} placeholder="Bild-URL eingeben..." fullWidth />
-									</>
-								)}
-							</ImageUploadContainer>
-						</FormGroup>
-
-						{editingQuestion.type === 'multiple-choice' && (
-							<AnswersSection>
-								<label>
-									<Trans id="quizEditor.answersLabel">Antworten (Wähle die korrekte Antwort)</Trans>
-								</label>
-								{editingQuestion.answers.map((answer, index) => (
-									<AnswerRow key={answer.id} isCorrect={answer.isCorrect}>
-										<CorrectRadio type="radio" name="correctAnswer" checked={answer.isCorrect} onChange={() => setCorrectAnswer(index)} title="Als korrekte Antwort markieren" />
-										<CorrectLabel isCorrect={answer.isCorrect}>
-											{answer.isCorrect ? (
-												<>
-													<Icon name="check" size="xs" color="success" /> <Trans id="quizEditor.markedCorrect">Korrekt</Trans>
-												</>
-											) : (
-												<Trans id="quizEditor.answerNumber">Antwort {index + 1}</Trans>
-											)}
-										</CorrectLabel>
-										<Input value={answer.text} onChange={(e) => updateAnswer(index, e.target.value)} placeholder={`Antwort ${index + 1}`} fullWidth />
-									</AnswerRow>
-								))}
-							</AnswersSection>
-						)}
-
-						{editingQuestion.type === 'true-false' && (
-							<FormGroup>
-								<label>
-									<Trans id="quizEditor.correctAnswer">Korrekte Antwort</Trans>
-								</label>
-								<TrueFalseOptions>
-									<TrueFalseOption selected={editingQuestion.correctAnswer === 1} onClick={() => updateQuestionField('correctAnswer', 1)}>
-										<input type="radio" checked={editingQuestion.correctAnswer === 1} readOnly />
-										<span>
-											<Trans id="quizEditor.trueOption">Wahr (True)</Trans>
-										</span>
-									</TrueFalseOption>
-									<TrueFalseOption selected={editingQuestion.correctAnswer === 0} onClick={() => updateQuestionField('correctAnswer', 0)}>
-										<input type="radio" checked={editingQuestion.correctAnswer === 0} readOnly />
-										<span>
-											<Trans id="quizEditor.falseOption">Falsch (False)</Trans>
-										</span>
-									</TrueFalseOption>
-								</TrueFalseOptions>
-							</FormGroup>
-						)}
-
-						{editingQuestion.type === 'text' && (
-							<>
-								<FormGroup>
-									<label>
-										<Trans id="quizEditor.inputType">Eingabetyp</Trans>
+												<ImageOptionInputs>
+													<Input
+														value={option.alt}
+														onChange={(e) => {
+															const newOptions = [...(editingQuestion.imageOptions || [])];
+															newOptions[index] = { ...newOptions[index], alt: e.target.value };
+															updateQuestionField('imageOptions', newOptions);
+														}}
+														placeholder="Beschreibung"
+														fullWidth
+													/>
+													<label style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '14px' }}>
+														<input
+															type="checkbox"
+															checked={option.correct}
+															onChange={(e) => {
+																const newOptions = [...(editingQuestion.imageOptions || [])];
+																newOptions[index] = { ...newOptions[index], correct: e.target.checked };
+																updateQuestionField('imageOptions', newOptions);
+															}}
+														/>
+														Korrekt
+													</label>
+												</ImageOptionInputs>
+											</ImageOptionCard>
+										))}
+										<AddImageOptionButton
+											onClick={() => {
+												const newOptions = [...(editingQuestion.imageOptions || []), { id: Date.now().toString(), imageUrl: '', alt: '', correct: false }];
+												updateQuestionField('imageOptions', newOptions);
+											}}
+										>
+											<FiPlus size={24} />
+											<span>Option hinzufügen</span>
+										</AddImageOptionButton>
+									</ImageOptionsGrid>
+									<label style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '16px' }}>
+										<input type="checkbox" checked={editingQuestion.imageChoiceMultiSelect || false} onChange={(e) => updateQuestionField('imageChoiceMultiSelect', e.target.checked)} />
+										Mehrfachauswahl erlauben
 									</label>
-									<select value={editingQuestion.textInputType || 'text'} onChange={(e) => updateQuestionField('textInputType', e.target.value)}>
-										<option value="text">Text</option>
-										<option value="number">
-											<Trans id="quizEditor.numbersOnly">Nur Zahlen</Trans>
-										</option>
-									</select>
 								</FormGroup>
-								<FormGroup>
-									<Input label="Korrekte Antwort" type={editingQuestion.textInputType || 'text'} value={editingQuestion.correctAnswerText || ''} onChange={(e) => updateQuestionField('correctAnswerText', e.target.value)} placeholder="Gib die korrekte Antwort ein..." fullWidth />
-								</FormGroup>
-							</>
-						)}
+							)}
 
-						{editingQuestion.type === 'buzzer' && (
-							<FormGroup>
-								<Input label="Korrekte Antwort" value={editingQuestion.correctAnswerText || ''} onChange={(e) => updateQuestionField('correctAnswerText', e.target.value)} placeholder="Gib die korrekte Antwort ein..." fullWidth />
-							</FormGroup>
-						)}
-
-						{editingQuestion.type === 'slider' && (
-							<>
-								<FormRow>
-									<FormGroup>
-										<Input label="Minimum" type="number" value={editingQuestion.sliderMin ?? 0} onChange={(e) => updateQuestionField('sliderMin', parseFloat(e.target.value) || 0)} fullWidth />
-									</FormGroup>
-									<FormGroup>
-										<Input label="Maximum" type="number" value={editingQuestion.sliderMax ?? 100} onChange={(e) => updateQuestionField('sliderMax', parseFloat(e.target.value) || 100)} fullWidth />
-									</FormGroup>
-								</FormRow>
-								<FormRow>
-									<FormGroup>
-										<Input label="Schrittweite" type="number" value={editingQuestion.sliderStep ?? 1} onChange={(e) => updateQuestionField('sliderStep', parseFloat(e.target.value) || 1)} placeholder="z.B. 0.1, 0.5, 1" fullWidth />
-									</FormGroup>
-									<FormGroup>
-										<Input label="Einheit (optional)" type="text" value={editingQuestion.sliderUnit || ''} onChange={(e) => updateQuestionField('sliderUnit', e.target.value)} placeholder="z.B. km, Jahre, €" fullWidth />
-									</FormGroup>
-								</FormRow>
-								<FormGroup>
-									<Input label="Korrekte Antwort" type="number" value={editingQuestion.sliderCorrectValue ?? 50} onChange={(e) => updateQuestionField('sliderCorrectValue', parseFloat(e.target.value) || 0)} fullWidth />
-									<SliderPreview>
-										<SliderPreviewLabel>Vorschau:</SliderPreviewLabel>
-										<SliderPreviewValue>
-											{editingQuestion.sliderCorrectValue ?? 50}
-											{editingQuestion.sliderUnit ? ` ${editingQuestion.sliderUnit}` : ''}
-										</SliderPreviewValue>
-										<SliderPreviewRange>
-											(von {editingQuestion.sliderMin ?? 0} bis {editingQuestion.sliderMax ?? 100})
-										</SliderPreviewRange>
-									</SliderPreview>
-								</FormGroup>
-							</>
-						)}
-
-						{editingQuestion.type === 'hotspot' && (
-							<>
-								{editingQuestion.imageData || editingQuestion.imageUrl ? (
-									<FormGroup>
-										<label>Korrekte Position markieren (Klicke auf das Bild)</label>
-										<HotspotEditorContainer>
-											<HotspotImageWrapper>
-												<HotspotEditorImage
-													src={editingQuestion.imageData || editingQuestion.imageUrl}
-													alt="Hotspot Bild"
-													onClick={(e) => {
-														const rect = e.currentTarget.getBoundingClientRect();
-														const x = ((e.clientX - rect.left) / rect.width) * 100;
-														const y = ((e.clientY - rect.top) / rect.height) * 100;
-														setEditingQuestion({
-															...editingQuestion,
-															hotspotX: Math.max(0, Math.min(100, x)),
-															hotspotY: Math.max(0, Math.min(100, y)),
-														});
+							{/* Geolocation Question Editor */}
+							{editingQuestion.type === 'geolocation' && (
+								<>
+									<FormRow>
+										<FormGroup>
+											<label>Modus</label>
+											<select value={editingQuestion.geoMode || 'image'} onChange={(e) => updateQuestionField('geoMode', e.target.value)}>
+												<option value="image">Bildmarkierung</option>
+												<option value="map">Karte (in Entwicklung)</option>
+											</select>
+										</FormGroup>
+										<FormGroup>
+											<Input label="Toleranz (%)" type="number" value={editingQuestion.geoTolerance || 5} onChange={(e) => updateQuestionField('geoTolerance', parseFloat(e.target.value))} min={1} max={50} />
+										</FormGroup>
+									</FormRow>
+									{editingQuestion.geoMode !== 'map' && (
+										<FormGroup>
+											<label>Hintergrundbild</label>
+											<ImageUploadContainer>
+												{editingQuestion.imageData || editingQuestion.imageUrl ? (
+													<GeoImagePreview>
+														<img src={editingQuestion.imageData || editingQuestion.imageUrl} alt="Hintergrundbild" />
+														{editingQuestion.geoCorrectX !== undefined && editingQuestion.geoCorrectY !== undefined && <GeoMarker style={{ left: `${editingQuestion.geoCorrectX}%`, top: `${editingQuestion.geoCorrectY}%` }}>📍</GeoMarker>}
+														<GeoClickOverlay
+															onClick={(e) => {
+																const rect = e.currentTarget.getBoundingClientRect();
+																const x = ((e.clientX - rect.left) / rect.width) * 100;
+																const y = ((e.clientY - rect.top) / rect.height) * 100;
+																updateQuestionField('geoCorrectX', x);
+																updateQuestionField('geoCorrectY', y);
+															}}
+														/>
+													</GeoImagePreview>
+												) : (
+													<ImageDropZone onClick={() => document.getElementById('geo-image-upload')?.click()}>
+														<FiImage size={32} />
+														<p>Klicke zum Hochladen eines Bildes</p>
+													</ImageDropZone>
+												)}
+												<input
+													id="geo-image-upload"
+													type="file"
+													accept="image/*"
+													style={{ display: 'none' }}
+													onChange={(e) => {
+														const file = e.target.files?.[0];
+														if (file) {
+															const reader = new FileReader();
+															reader.onload = (event) => {
+																updateQuestionField('imageData', event.target?.result as string);
+															};
+															reader.readAsDataURL(file);
+														}
 													}}
 												/>
-												{editingQuestion.hotspotX !== undefined && editingQuestion.hotspotY !== undefined && (
-													<HotspotMarker
-														style={{
-															left: `${editingQuestion.hotspotX}%`,
-															top: `${editingQuestion.hotspotY}%`,
-														}}
-													/>
-												)}
-											</HotspotImageWrapper>
-										</HotspotEditorContainer>
-										<HotspotCoords>
-											Position: X = {editingQuestion.hotspotX?.toFixed(1)}%, Y = {editingQuestion.hotspotY?.toFixed(1)}%
-										</HotspotCoords>
-									</FormGroup>
-								) : (
-									<FormGroup>
-										<HotspotWarning>⚠️ Bitte lade zuerst ein Bild hoch, um die korrekte Position zu markieren.</HotspotWarning>
-									</FormGroup>
-								)}
-								<FormGroup>
-									<label>Optionen</label>
-									<CheckboxRow>
-										<input type="checkbox" checked={editingQuestion.hotspotAllowZoom ?? true} onChange={(e) => updateQuestionField('hotspotAllowZoom', e.target.checked)} id="allowZoom" />
-										<label htmlFor="allowZoom">Zoom erlauben (Spieler können das Bild vergrößern)</label>
-									</CheckboxRow>
-								</FormGroup>
-							</>
-						)}
+											</ImageUploadContainer>
+											<SortingHint>Klicke auf das Bild, um die korrekte Position zu markieren.</SortingHint>
+										</FormGroup>
+									)}
+								</>
+							)}
 
-						{editingQuestion.type === 'sorting' && (
 							<FormGroup>
-								<label>Elemente (in korrekter Reihenfolge)</label>
-								<SortingItemsContainer>
-									{(editingQuestion.sortingItems || []).map((item, index) => (
-										<SortingItemRow key={index}>
-											<SortingItemNumber>{index + 1}.</SortingItemNumber>
-											<Input
-												value={item}
-												onChange={(e) => {
-													const newItems = [...(editingQuestion.sortingItems || [])];
-													newItems[index] = e.target.value;
-													updateQuestionField('sortingItems', newItems);
-												}}
-												placeholder={`Element ${index + 1}`}
-												fullWidth
-											/>
-											<IconButton
-												onClick={() => {
-													const newItems = (editingQuestion.sortingItems || []).filter((_, i) => i !== index);
-													updateQuestionField('sortingItems', newItems.length > 0 ? newItems : ['Element 1']);
-												}}
-												title="Entfernen"
-												danger
-												disabled={(editingQuestion.sortingItems || []).length <= 2}
-											>
-												<FiTrash2 />
-											</IconButton>
-										</SortingItemRow>
-									))}
-									<Button
-										variant="outline"
-										size="sm"
-										leftIcon={<FiPlus />}
-										onClick={() => {
-											const newItems = [...(editingQuestion.sortingItems || []), `Element ${(editingQuestion.sortingItems || []).length + 1}`];
-											updateQuestionField('sortingItems', newItems);
-										}}
-									>
-										Element hinzufügen
-									</Button>
-								</SortingItemsContainer>
-								<SortingHint>Die Elemente werden den Spielern in zufälliger Reihenfolge angezeigt. Sie müssen sie in die hier definierte korrekte Reihenfolge bringen.</SortingHint>
+								<Input label="Punkte" type="number" value={editingQuestion.points} onChange={(e) => updateQuestionField('points', parseInt(e.target.value))} />
 							</FormGroup>
-						)}
-						<FormGroup>
-							<Input label="Punkte" type="number" value={editingQuestion.points} onChange={(e) => updateQuestionField('points', parseInt(e.target.value))} />
-						</FormGroup>
 
-						<FormGroup>
-							<Input label="Hinweis (optional)" value={editingQuestion.hint || ''} onChange={(e) => updateQuestionField('hint', e.target.value)} placeholder="Optionaler Hinweis für den Moderator..." fullWidth />
-						</FormGroup>
+							<FormGroup>
+								<Input label="Hinweis (optional)" value={editingQuestion.hint || ''} onChange={(e) => updateQuestionField('hint', e.target.value)} placeholder="Optionaler Hinweis für den Moderator..." fullWidth />
+							</FormGroup>
 
-						<ButtonRow>
-							<Button variant="outline" onClick={() => setShowQuestionModal(false)}>
-								{' '}
-								<Trans id="common.cancel">Abbrechen</Trans>
-							</Button>
-							<Button variant="primary" onClick={saveQuestion}>
-								<Trans id="common.save">Speichern</Trans>
-							</Button>
-						</ButtonRow>
-					</EditorForm>
-				)}
-			</Modal>
+							<ButtonRow>
+								<Button variant="outline" onClick={() => setShowQuestionModal(false)}>
+									{' '}
+									<Trans id="common.cancel">Abbrechen</Trans>
+								</Button>
+								<Button variant="primary" onClick={saveQuestion}>
+									<Trans id="common.save">Speichern</Trans>
+								</Button>
+							</ButtonRow>
+						</EditorForm>
+					)}
+				</Modal>
 
-			{/* Load Quiz Modal */}
-			<Modal isOpen={showLoadModal} onClose={() => setShowLoadModal(false)} title="Quiz laden">
-				{loadingQuizList ? (
-					<LoadingContainer>
-						<Trans id="quizEditor.loadingQuizzes">Lade Quizze...</Trans>
-					</LoadingContainer>
-				) : availableQuizzes.length === 0 ? (
-					<EmptyListMessage>
-						<Trans id="quizEditor.noSavedQuizzes">Keine gespeicherten Quizze gefunden.</Trans>
-					</EmptyListMessage>
-				) : (
-					<QuizList>
-						{availableQuizzes.map((quiz) => (
-							<QuizListItem key={quiz.id} onClick={() => loadQuizFromBackend(quiz.id)}>
-								<QuizListItemTitle>{quiz.title}</QuizListItemTitle>
-								<QuizListItemMeta>
-									{quiz.question_count} <Trans id="common.questionsCount">Fragen</Trans> • {new Date(quiz.updated_at).toLocaleDateString('de-DE')}
-								</QuizListItemMeta>
-							</QuizListItem>
-						))}
-					</QuizList>
-				)}
-				<ModalActions>
-					<Button variant="outline" onClick={() => setShowLoadModal(false)}>
-						<Trans id="common.close">Schließen</Trans>
-					</Button>
-				</ModalActions>
-			</Modal>
-		</Layout>
+				{/* Load Quiz Modal */}
+				<Modal isOpen={showLoadModal} onClose={() => setShowLoadModal(false)} title="Quiz laden">
+					{loadingQuizList ? (
+						<LoadingContainer>
+							<Trans id="quizEditor.loadingQuizzes">Lade Quizze...</Trans>
+						</LoadingContainer>
+					) : availableQuizzes.length === 0 ? (
+						<EmptyListMessage>
+							<Trans id="quizEditor.noSavedQuizzes">Keine gespeicherten Quizze gefunden.</Trans>
+						</EmptyListMessage>
+					) : (
+						<QuizList>
+							{availableQuizzes.map((quiz) => (
+								<QuizListItem key={quiz.id} onClick={() => loadQuizFromBackend(quiz.id)}>
+									<QuizListItemTitle>{quiz.title}</QuizListItemTitle>
+									<QuizListItemMeta>
+										{quiz.question_count} <Trans id="common.questionsCount">Fragen</Trans> • {new Date(quiz.updated_at).toLocaleDateString('de-DE')}
+									</QuizListItemMeta>
+								</QuizListItem>
+							))}
+						</QuizList>
+					)}
+					<ModalActions>
+						<Button variant="outline" onClick={() => setShowLoadModal(false)}>
+							<Trans id="common.close">Schließen</Trans>
+						</Button>
+					</ModalActions>
+				</Modal>
+			</Layout>
+		</div>
 	);
 };
 
@@ -1132,6 +1626,8 @@ const Container = styled.div`
 	display: flex;
 	flex-direction: column;
 	gap: ${spacing.xl};
+	height: 100%;
+	min-height: 0; /* Allow flex child to shrink */
 `;
 
 const HeaderContent = styled.div`
@@ -1172,6 +1668,11 @@ const QuestionsList = styled.div`
 	display: flex;
 	flex-direction: column;
 	gap: ${spacing.md};
+	flex: 1;
+	min-height: 0; /* Allow scrolling */
+	/* Allow the questions area to scroll independently when the GameMode section is large */
+	overflow: auto;
+	max-height: calc(100vh - 360px); /* leave room for header and catalog info */
 `;
 
 const ListHeader = styled.div`
@@ -1192,7 +1693,38 @@ const QuestionsTable = styled.div`
 	gap: 1px;
 	background: var(--color-border);
 	border-radius: var(--radius-md);
-	overflow: hidden;
+	overflow-y: auto;
+	overflow-x: hidden;
+	max-height: calc(100vh - 340px); /* Leave space for header, quiz info, and footer */
+	min-height: 200px;
+	padding-bottom: 2px; /* Ensure last item is fully visible */
+
+	/* Custom scrollbar styling */
+	&::-webkit-scrollbar {
+		width: 8px;
+	}
+
+	&::-webkit-scrollbar-track {
+		background: var(--color-neutral-100);
+		border-radius: 4px;
+	}
+
+	&::-webkit-scrollbar-thumb {
+		background: var(--color-neutral-400);
+		border-radius: 4px;
+	}
+
+	&::-webkit-scrollbar-thumb:hover {
+		background: var(--color-neutral-500);
+	}
+
+	[data-theme='dark'] &::-webkit-scrollbar-track {
+		background: var(--color-neutral-800);
+	}
+
+	[data-theme='dark'] &::-webkit-scrollbar-thumb {
+		background: var(--color-neutral-600);
+	}
 `;
 
 const QuestionRow = styled.div`
@@ -1264,6 +1796,14 @@ const QuestionTypeTag = styled.div<{ type: string }>`
 				return 'var(--color-warning-100)';
 			case 'sorting':
 				return 'var(--color-secondary-100)';
+			case 'matching':
+				return 'var(--color-info-100, #e0f2fe)';
+			case 'audio':
+				return 'var(--color-purple-100, #f3e8ff)';
+			case 'image-choice':
+				return 'var(--color-pink-100, #fce7f3)';
+			case 'geolocation':
+				return 'var(--color-teal-100, #ccfbf1)';
 			default:
 				return 'var(--color-neutral-100)';
 		}
@@ -1284,6 +1824,14 @@ const QuestionTypeTag = styled.div<{ type: string }>`
 				return 'var(--color-warning-700)';
 			case 'sorting':
 				return 'var(--color-secondary-700)';
+			case 'matching':
+				return 'var(--color-info-700, #0369a1)';
+			case 'audio':
+				return 'var(--color-purple-700, #7c3aed)';
+			case 'image-choice':
+				return 'var(--color-pink-700, #be185d)';
+			case 'geolocation':
+				return 'var(--color-teal-700, #0f766e)';
 			default:
 				return 'var(--color-neutral-700)';
 		}
@@ -1534,7 +2082,7 @@ const ImageUploadLabel = styled.label`
 	padding: var(--spacing-sm) var(--spacing-md);
 	background: var(--color-primary-500);
 	color: var(--color-text-inverse);
-	border-radius: var(--radius-sm);
+	border-radius: var(--radius-md);
 	cursor: pointer;
 	font-size: var(--font-size-sm);
 	font-weight: var(--font-weight-medium);
@@ -1773,4 +2321,358 @@ const SortingHint = styled.p`
 	font-size: var(--font-size-sm);
 	color: var(--color-text-secondary);
 	font-style: italic;
+`;
+
+// Matching question styled components
+const MatchingPairRow = styled.div`
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-sm);
+	margin-bottom: var(--spacing-sm);
+`;
+
+const MatchingArrow = styled.span`
+	font-size: 1.25rem;
+	color: var(--color-primary);
+	flex-shrink: 0;
+`;
+
+// Audio question styled components
+const AudioUploadContainer = styled.div`
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-md);
+`;
+
+const AudioPreviewContainer = styled.div`
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-sm);
+	padding: var(--spacing-md);
+	background: var(--color-surface);
+	border: 1px solid var(--color-border);
+	border-radius: var(--radius-md);
+`;
+
+const UploadButton = styled.button`
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: var(--spacing-sm);
+	padding: var(--spacing-lg);
+	background: var(--color-surface);
+	border: 2px dashed var(--color-border);
+	border-radius: var(--radius-md);
+	cursor: pointer;
+	font-size: var(--font-size-md);
+	color: var(--color-text-secondary);
+	transition: all 0.2s ease;
+
+	&:hover {
+		border-color: var(--color-primary);
+		color: var(--color-primary);
+	}
+`;
+
+// Image choice styled components
+const ImageOptionsGrid = styled.div`
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+	gap: var(--spacing-md);
+`;
+
+const ImageOptionCard = styled.div`
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-xs);
+	background: var(--color-surface);
+	border: 1px solid var(--color-border);
+	border-radius: var(--radius-md);
+	padding: var(--spacing-sm);
+`;
+
+const ImageOptionPreview = styled.div`
+	position: relative;
+	aspect-ratio: 1;
+	border-radius: var(--radius-sm);
+	overflow: hidden;
+
+	img {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+	}
+`;
+
+const ImageOptionOverlay = styled.div`
+	position: absolute;
+	inset: 0;
+	background: rgba(0, 0, 0, 0.5);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	opacity: 0;
+	transition: opacity 0.2s ease;
+
+	${ImageOptionPreview}:hover & {
+		opacity: 1;
+	}
+`;
+
+const ImageOptionUpload = styled.button`
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: var(--spacing-xs);
+	aspect-ratio: 1;
+	background: var(--color-neutral-100);
+	border: 2px dashed var(--color-border);
+	border-radius: var(--radius-sm);
+	cursor: pointer;
+	color: var(--color-text-secondary);
+	transition: all 0.2s ease;
+
+	&:hover {
+		border-color: var(--color-primary);
+		color: var(--color-primary);
+	}
+`;
+
+const ImageOptionInputs = styled.div`
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-xs);
+`;
+
+const AddImageOptionButton = styled.button`
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: var(--spacing-sm);
+	min-height: 150px;
+	background: var(--color-surface);
+	border: 2px dashed var(--color-border);
+	border-radius: var(--radius-md);
+	cursor: pointer;
+	color: var(--color-text-secondary);
+	transition: all 0.2s ease;
+
+	&:hover {
+		border-color: var(--color-primary);
+		color: var(--color-primary);
+	}
+`;
+
+// Geolocation styled components
+const GeoImagePreview = styled.div`
+	position: relative;
+	width: 100%;
+	max-height: 400px;
+	border-radius: var(--radius-md);
+	overflow: hidden;
+
+	img {
+		width: 100%;
+		height: 100%;
+		object-fit: contain;
+	}
+`;
+
+const GeoMarker = styled.div`
+	position: absolute;
+	transform: translate(-50%, -100%);
+	font-size: 2rem;
+	pointer-events: none;
+	z-index: 10;
+	filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+`;
+
+const GeoClickOverlay = styled.div`
+	position: absolute;
+	inset: 0;
+	cursor: crosshair;
+`;
+
+// Game Mode and Team Configuration styled components
+const GameModeSection = styled.div`
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-md);
+	padding: var(--spacing-lg);
+	background: var(--color-surface);
+	border-radius: var(--radius-lg);
+	border: 1px solid var(--color-border);
+`;
+
+const GameModeHeader = styled.div`
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-sm);
+	font-weight: 600;
+	color: var(--color-text-primary);
+
+	svg {
+		color: var(--color-primary);
+	}
+`;
+
+const GameModeSelector = styled.div`
+	display: flex;
+	gap: var(--spacing-md);
+`;
+
+const GameModeOption = styled.button<{ $active: boolean }>`
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--spacing-xs);
+	flex: 1;
+	padding: var(--spacing-md);
+	background: ${({ $active }) => ($active ? 'var(--color-primary-100, rgba(14, 165, 233, 0.15))' : 'var(--color-surface)')};
+	border: 2px solid ${({ $active }) => ($active ? 'var(--color-primary)' : 'var(--color-border)')};
+	border-radius: var(--radius-lg);
+	cursor: pointer;
+	transition: all 0.2s ease;
+	color: var(--color-text-primary);
+
+	svg {
+		color: ${({ $active }) => ($active ? 'var(--color-primary)' : 'var(--color-text-secondary)')};
+	}
+
+	&:hover {
+		border-color: var(--color-primary);
+		background: ${({ $active }) => ($active ? 'var(--color-primary-100, rgba(14, 165, 233, 0.15))' : 'var(--color-surface-hover)')};
+
+		svg {
+			color: var(--color-primary);
+		}
+	}
+`;
+
+const GameModeLabel = styled.span`
+	font-weight: 600;
+	color: inherit;
+`;
+
+const GameModeDescription = styled.span`
+	font-size: var(--font-size-sm);
+	color: var(--color-text-secondary);
+	text-align: center;
+`;
+
+const TeamConfigSection = styled.div`
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-md);
+	padding-top: var(--spacing-md);
+	border-top: 1px solid var(--color-border);
+	border-radius: var(--radius-md);
+`;
+
+const TeamListContainer = styled.div`
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-sm);
+`;
+
+const TeamRow = styled.div`
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-sm);
+	padding: var(--spacing-md);
+	background: var(--color-surface);
+	border-radius: var(--radius-md);
+	border: 1px solid var(--color-border);
+	transition: all 0.2s ease;
+
+	&:hover {
+		border-color: var(--color-primary-300);
+	}
+`;
+
+const TeamColorPicker = styled.input`
+	width: 44px;
+	height: 44px;
+	padding: 0;
+	border: none;
+	border-radius: var(--radius-md);
+	cursor: pointer;
+
+	&::-webkit-color-swatch-wrapper {
+		padding: 0;
+	}
+
+	&::-webkit-color-swatch {
+		border: 2px solid var(--color-border);
+		border-radius: var(--radius-md);
+	}
+`;
+
+const TeamNameInput = styled.input`
+	flex: 1;
+	padding: var(--spacing-sm) var(--spacing-md);
+	border: 1px solid var(--color-border);
+	border-radius: var(--radius-md);
+	background: var(--color-input-bg, var(--color-surface));
+	color: var(--color-text-primary);
+	font-size: var(--font-size-md);
+	transition: all 0.2s ease;
+
+	&:focus {
+		outline: none;
+		border-color: var(--color-primary);
+		box-shadow: 0 0 0 2px var(--color-focus-ring);
+	}
+
+	&::placeholder {
+		color: var(--color-text-tertiary);
+	}
+`;
+
+const TeamDeleteButton = styled.button`
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 40px;
+	height: 40px;
+	background: transparent;
+	border: 1px solid var(--color-border);
+	border-radius: var(--radius-md);
+	cursor: pointer;
+	color: var(--color-text-secondary);
+	transition: all 0.2s ease;
+
+	&:hover {
+		background: var(--color-error-bg, rgba(239, 68, 68, 0.1));
+		border-color: var(--color-error-500);
+		color: var(--color-error-500);
+	}
+
+	&:disabled {
+		opacity: 0.4;
+		cursor: not-allowed;
+	}
+`;
+
+const AddTeamButton = styled.button`
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: var(--spacing-sm);
+	padding: var(--spacing-md);
+	background: transparent;
+	border: 2px dashed var(--color-border);
+	border-radius: var(--radius-md);
+	cursor: pointer;
+	color: var(--color-text-secondary);
+	font-size: var(--font-size-md);
+	transition: all 0.2s ease;
+
+	&:hover {
+		border-color: var(--color-primary);
+		color: var(--color-primary);
+		background: var(--color-primary-bg, rgba(14, 165, 233, 0.05));
+	}
 `;
