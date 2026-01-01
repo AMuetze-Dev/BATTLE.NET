@@ -1144,9 +1144,9 @@ const HeaderContent = styled.div`
 
 const Title = styled.h1`
 	margin: 0;
-	font-size: 24px;
-	font-weight: 600;
-	color: ${colors.text.primary};
+	font-size: var(--font-size-2xl);
+	font-weight: var(--font-weight-semibold);
+	color: var(--color-text-primary);
 `;
 
 const HeaderLeft = styled.div`
@@ -1181,8 +1181,8 @@ const ListHeader = styled.div`
 
 	h2 {
 		margin: 0;
-		font-size: 20px;
-		color: ${colors.text.primary};
+		font-size: var(--font-size-xl);
+		color: var(--color-text-primary);
 	}
 `;
 
@@ -1190,8 +1190,8 @@ const QuestionsTable = styled.div`
 	display: flex;
 	flex-direction: column;
 	gap: 1px;
-	background: ${colors.neutral[200]};
-	border-radius: 8px;
+	background: var(--color-border);
+	border-radius: var(--radius-md);
 	overflow: hidden;
 `;
 
@@ -1199,9 +1199,9 @@ const QuestionRow = styled.div`
 	display: grid;
 	grid-template-columns: 40px 50px 60px 1fr 80px 100px;
 	align-items: center;
-	gap: ${spacing.md};
-	padding: ${spacing.md} ${spacing.lg};
-	background: white;
+	gap: var(--spacing-md);
+	padding: var(--spacing-md) var(--spacing-lg);
+	background: var(--color-surface);
 	transition: all 0.2s;
 	cursor: grab;
 
@@ -1210,8 +1210,8 @@ const QuestionRow = styled.div`
 	}
 
 	&:hover {
-		background: ${colors.neutral[50]};
-		box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+		background: var(--color-surface-hover);
+		box-shadow: var(--shadow-xs);
 	}
 `;
 
@@ -1219,13 +1219,13 @@ const DragHandle = styled.div`
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	color: ${colors.neutral[400]};
+	color: var(--color-text-tertiary);
 	font-size: 18px;
 	cursor: grab;
 	transition: color 0.2s;
 
 	&:hover {
-		color: ${colors.neutral[600]};
+		color: var(--color-text-secondary);
 	}
 
 	&:active {
@@ -1234,58 +1234,58 @@ const DragHandle = styled.div`
 `;
 
 const QuestionNumber = styled.div`
-	font-weight: 600;
-	color: ${colors.neutral[500]};
-	font-size: 14px;
+	font-weight: var(--font-weight-semibold);
+	color: var(--color-text-secondary);
+	font-size: var(--font-size-sm);
 	text-align: center;
 `;
 
 const QuestionTypeTag = styled.div<{ type: string }>`
-	font-size: 11px;
-	font-weight: 600;
+	font-size: var(--font-size-xs);
+	font-weight: var(--font-weight-semibold);
 	text-transform: uppercase;
 	padding: 4px 8px;
-	border-radius: 4px;
+	border-radius: var(--radius-sm);
 	text-align: center;
 	white-space: nowrap;
 	background: ${(props) => {
 		switch (props.type) {
 			case 'multiple-choice':
-				return colors.primary[100];
+				return 'var(--color-primary-100)';
 			case 'true-false':
-				return colors.primary[100];
+				return 'var(--color-primary-100)';
 			case 'text':
-				return colors.primary[100];
+				return 'var(--color-primary-100)';
 			case 'buzzer':
-				return colors.error[100];
+				return 'var(--color-error-100)';
 			case 'slider':
-				return colors.success[100];
+				return 'var(--color-success-100)';
 			case 'hotspot':
-				return colors.warning[100];
+				return 'var(--color-warning-100)';
 			case 'sorting':
-				return colors.secondary[100];
+				return 'var(--color-secondary-100)';
 			default:
-				return colors.neutral[100];
+				return 'var(--color-neutral-100)';
 		}
 	}};
 	color: ${(props) => {
 		switch (props.type) {
 			case 'multiple-choice':
-				return colors.primary[700];
+				return 'var(--color-primary-700)';
 			case 'true-false':
-				return colors.primary[700];
+				return 'var(--color-primary-700)';
 			case 'text':
-				return colors.primary[700];
+				return 'var(--color-primary-700)';
 			case 'buzzer':
-				return colors.error[700];
+				return 'var(--color-error-700)';
 			case 'slider':
-				return colors.success[700];
+				return 'var(--color-success-700)';
 			case 'hotspot':
-				return colors.warning[700];
+				return 'var(--color-warning-700)';
 			case 'sorting':
-				return colors.secondary[700];
+				return 'var(--color-secondary-700)';
 			default:
-				return colors.neutral[700];
+				return 'var(--color-neutral-700)';
 		}
 	}};
 `;
@@ -1298,37 +1298,37 @@ const QuestionTextCell = styled.div`
 	cursor: pointer;
 
 	&:hover {
-		color: ${colors.primary[600]};
+		color: var(--color-primary-600);
 	}
 `;
 
 const QuestionTextMain = styled.div`
-	font-size: 14px;
-	font-weight: 500;
-	color: ${colors.text.primary};
+	font-size: var(--font-size-sm);
+	font-weight: var(--font-weight-medium);
+	color: var(--color-text-primary);
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
 `;
 
 const QuestionTextSub = styled.div`
-	font-size: 12px;
-	color: ${colors.primary[600]};
+	font-size: var(--font-size-xs);
+	color: var(--color-primary-600);
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
 `;
 
 const PointsCell = styled.div`
-	font-size: 13px;
-	font-weight: 600;
-	color: ${colors.neutral[600]};
+	font-size: var(--font-size-sm);
+	font-weight: var(--font-weight-semibold);
+	color: var(--color-text-secondary);
 	text-align: right;
 
 	&::after {
 		content: ' Pkt';
-		font-weight: 400;
-		color: ${colors.neutral[500]};
+		font-weight: var(--font-weight-normal);
+		color: var(--color-text-tertiary);
 	}
 `;
 
@@ -1345,16 +1345,16 @@ const IconButton = styled.button<{ danger?: boolean }>`
 	width: 32px;
 	height: 32px;
 	border: none;
-	background: ${(props) => (props.danger ? colors.error[50] : colors.neutral[100])};
-	color: ${(props) => (props.danger ? colors.error[600] : colors.neutral[600])};
-	border-radius: 6px;
+	background: ${(props) => (props.danger ? 'var(--color-error-bg)' : 'var(--color-surface-hover)')};
+	color: ${(props) => (props.danger ? 'var(--color-error-500)' : 'var(--color-text-secondary)')};
+	border-radius: var(--radius-sm);
 	cursor: pointer;
 	transition: all 0.2s;
 	font-size: 16px;
 
 	&:hover {
-		background: ${(props) => (props.danger ? colors.error[100] : colors.neutral[200])};
-		color: ${(props) => (props.danger ? colors.error[700] : colors.neutral[700])};
+		background: ${(props) => (props.danger ? 'var(--color-error-100, #fee2e2)' : 'var(--color-border)')};
+		color: ${(props) => (props.danger ? 'var(--color-error-700)' : 'var(--color-text-primary)')};
 		transform: scale(1.05);
 	}
 
@@ -1379,13 +1379,13 @@ const EmptyIcon = styled.div`
 
 const EmptyTitle = styled.h3`
 	margin: 0;
-	font-size: 20px;
-	color: ${colors.text.primary};
+	font-size: var(--font-size-xl);
+	color: var(--color-text-primary);
 `;
 
 const EmptyText = styled.p`
 	margin: 0;
-	color: ${colors.text.secondary};
+	color: var(--color-text-secondary);
 `;
 
 const EditorForm = styled.div`
@@ -1403,24 +1403,25 @@ const FormRow = styled.div`
 const FormGroup = styled.div`
 	display: flex;
 	flex-direction: column;
-	gap: ${spacing.sm};
+	gap: var(--spacing-sm);
 
 	label {
-		font-weight: 500;
-		color: ${colors.text.primary};
-		font-size: 14px;
+		font-weight: var(--font-weight-medium);
+		color: var(--color-text-primary);
+		font-size: var(--font-size-sm);
 	}
 
 	select {
 		padding: 10px;
-		border: 1px solid ${colors.neutral[300]};
-		border-radius: 8px;
-		font-size: 14px;
-		background: white;
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius-md);
+		font-size: var(--font-size-sm);
+		background: var(--color-surface);
+		color: var(--color-text-primary);
 
 		&:focus {
 			outline: none;
-			border-color: ${colors.primary[400]};
+			border-color: var(--color-primary-400);
 		}
 	}
 `;
@@ -1433,16 +1434,16 @@ const AnswersSection = styled.div`
 
 const AnswerRow = styled.div<{ isCorrect?: boolean }>`
 	display: flex;
-	gap: ${spacing.sm};
+	gap: var(--spacing-sm);
 	align-items: center;
-	padding: ${spacing.md};
-	border-radius: 8px;
-	background: ${(props) => (props.isCorrect ? colors.primary[50] : colors.neutral[50])};
-	border: 2px solid ${(props) => (props.isCorrect ? colors.primary[400] : colors.neutral[200])};
+	padding: var(--spacing-md);
+	border-radius: var(--radius-md);
+	background: ${(props) => (props.isCorrect ? 'var(--color-primary-bg)' : 'var(--color-surface-hover)')};
+	border: 2px solid ${(props) => (props.isCorrect ? 'var(--color-primary-border)' : 'var(--color-border)')};
 	transition: all 0.2s;
 
 	&:hover {
-		border-color: ${(props) => (props.isCorrect ? colors.primary[500] : colors.primary[300])};
+		border-color: ${(props) => (props.isCorrect ? 'var(--color-primary-500)' : 'var(--color-primary-300)')};
 	}
 `;
 
@@ -1450,14 +1451,14 @@ const CorrectRadio = styled.input`
 	width: 20px;
 	height: 20px;
 	cursor: pointer;
-	accent-color: ${colors.primary[500]};
+	accent-color: var(--color-primary-500);
 `;
 
 const CorrectLabel = styled.span<{ isCorrect: boolean }>`
 	min-width: 100px;
-	font-size: 14px;
-	font-weight: ${(props) => (props.isCorrect ? 600 : 400)};
-	color: ${(props) => (props.isCorrect ? colors.primary[700] : colors.text.secondary)};
+	font-size: var(--font-size-sm);
+	font-weight: ${(props) => (props.isCorrect ? 'var(--font-weight-semibold)' : 'var(--font-weight-normal)')};
+	color: ${(props) => (props.isCorrect ? 'var(--color-primary-700)' : 'var(--color-text-secondary)')};
 `;
 
 const TrueFalseOptions = styled.div`
@@ -1469,29 +1470,29 @@ const TrueFalseOption = styled.div<{ selected: boolean }>`
 	flex: 1;
 	display: flex;
 	align-items: center;
-	gap: ${spacing.sm};
-	padding: ${spacing.md};
-	border: 2px solid ${(props) => (props.selected ? colors.primary[400] : colors.neutral[300])};
-	background: ${(props) => (props.selected ? colors.primary[50] : 'white')};
-	border-radius: 8px;
+	gap: var(--spacing-sm);
+	padding: var(--spacing-md);
+	border: 2px solid ${(props) => (props.selected ? 'var(--color-primary-border)' : 'var(--color-border)')};
+	background: ${(props) => (props.selected ? 'var(--color-primary-bg)' : 'var(--color-surface)')};
+	border-radius: var(--radius-md);
 	cursor: pointer;
 	transition: all 0.2s;
 
 	&:hover {
-		border-color: ${(props) => (props.selected ? colors.primary[500] : colors.primary[300])};
+		border-color: ${(props) => (props.selected ? 'var(--color-primary-500)' : 'var(--color-primary-300)')};
 	}
 
 	input {
 		width: 20px;
 		height: 20px;
 		cursor: pointer;
-		accent-color: ${colors.primary[500]};
+		accent-color: var(--color-primary-500);
 	}
 
 	span {
-		font-size: 14px;
-		font-weight: ${(props) => (props.selected ? 600 : 400)};
-		color: ${(props) => (props.selected ? colors.primary[700] : colors.text.primary)};
+		font-size: var(--font-size-sm);
+		font-weight: ${(props) => (props.selected ? 'var(--font-weight-semibold)' : 'var(--font-weight-normal)')};
+		color: ${(props) => (props.selected ? 'var(--color-primary-700)' : 'var(--color-text-primary)')};
 	}
 `;
 
@@ -1514,33 +1515,33 @@ const ImageDropZone = styled.div`
 	flex-direction: column;
 	align-items: center;
 	justify-content: center;
-	gap: ${spacing.sm};
-	padding: ${spacing.xl};
-	border: 2px dashed ${colors.neutral[300]};
-	border-radius: 8px;
-	background: ${colors.neutral[50]};
-	color: ${colors.neutral[500]};
+	gap: var(--spacing-sm);
+	padding: var(--spacing-xl);
+	border: 2px dashed var(--color-border);
+	border-radius: var(--radius-md);
+	background: var(--color-surface-hover);
+	color: var(--color-text-secondary);
 	cursor: pointer;
 	transition: all 0.2s;
 
 	&:hover {
-		border-color: ${colors.primary[400]};
-		background: ${colors.primary[50]};
+		border-color: var(--color-primary-400);
+		background: var(--color-primary-bg);
 	}
 `;
 
 const ImageUploadLabel = styled.label`
-	padding: ${spacing.sm} ${spacing.md};
-	background: ${colors.primary[500]};
-	color: white;
-	border-radius: 6px;
+	padding: var(--spacing-sm) var(--spacing-md);
+	background: var(--color-primary-500);
+	color: var(--color-text-inverse);
+	border-radius: var(--radius-sm);
 	cursor: pointer;
-	font-size: 14px;
-	font-weight: 500;
+	font-size: var(--font-size-sm);
+	font-weight: var(--font-weight-medium);
 	transition: background 0.2s;
 
 	&:hover {
-		background: ${colors.primary[600]};
+		background: var(--color-primary-600);
 	}
 `;
 
@@ -1555,110 +1556,110 @@ const ImagePreviewContainer = styled.div`
 const ImagePreview = styled.img`
 	max-width: 100%;
 	max-height: 200px;
-	border-radius: 8px;
+	border-radius: var(--radius-md);
 	object-fit: contain;
-	border: 1px solid ${colors.neutral[200]};
+	border: 1px solid var(--color-border);
 `;
 
 const RemoveImageButton = styled.button`
 	display: flex;
 	align-items: center;
-	gap: ${spacing.xs};
-	padding: ${spacing.sm} ${spacing.md};
-	background: ${colors.error[100]};
-	color: ${colors.error[700]};
-	border: 1px solid ${colors.error[300]};
-	border-radius: 6px;
+	gap: var(--spacing-xs);
+	padding: var(--spacing-sm) var(--spacing-md);
+	background: var(--color-error-bg);
+	color: var(--color-error-700);
+	border: 1px solid var(--color-error-border);
+	border-radius: var(--radius-sm);
 	cursor: pointer;
-	font-size: 14px;
+	font-size: var(--font-size-sm);
 	transition: all 0.2s;
 
 	&:hover {
-		background: ${colors.error[200]};
+		background: var(--color-error-100, #fecaca);
 	}
 `;
 
 // Load Modal Styled Components
 const LoadingContainer = styled.div`
-	padding: ${spacing.xl};
+	padding: var(--spacing-xl);
 	text-align: center;
-	color: ${colors.text.secondary};
+	color: var(--color-text-secondary);
 `;
 
 const EmptyListMessage = styled.div`
-	padding: ${spacing.xl};
+	padding: var(--spacing-xl);
 	text-align: center;
-	color: ${colors.text.secondary};
+	color: var(--color-text-secondary);
 	font-style: italic;
 `;
 
 const QuizList = styled.div`
 	display: flex;
 	flex-direction: column;
-	gap: ${spacing.sm};
+	gap: var(--spacing-sm);
 	max-height: 400px;
 	overflow-y: auto;
 `;
 
 const QuizListItem = styled.div`
-	padding: ${spacing.md};
-	background: ${colors.neutral[50]};
-	border: 1px solid ${colors.neutral[200]};
-	border-radius: 8px;
+	padding: var(--spacing-md);
+	background: var(--color-surface);
+	border: 1px solid var(--color-border);
+	border-radius: var(--radius-md);
 	cursor: pointer;
 	transition: all 0.2s;
 
 	&:hover {
-		background: ${colors.primary[50]};
-		border-color: ${colors.primary[300]};
+		background: var(--color-primary-bg);
+		border-color: var(--color-primary-border);
 	}
 `;
 
 const QuizListItemTitle = styled.h4`
-	margin: 0 0 ${spacing.xs} 0;
-	font-size: 16px;
-	font-weight: 600;
-	color: ${colors.text.primary};
+	margin: 0 0 var(--spacing-xs) 0;
+	font-size: var(--font-size-md);
+	font-weight: var(--font-weight-semibold);
+	color: var(--color-text-primary);
 `;
 
 const QuizListItemMeta = styled.span`
-	font-size: 14px;
-	color: ${colors.text.secondary};
+	font-size: var(--font-size-sm);
+	color: var(--color-text-secondary);
 `;
 
 const ModalActions = styled.div`
 	display: flex;
 	justify-content: flex-end;
-	margin-top: ${spacing.lg};
-	padding-top: ${spacing.md};
-	border-top: 1px solid ${colors.neutral[200]};
+	margin-top: var(--spacing-lg);
+	padding-top: var(--spacing-md);
+	border-top: 1px solid var(--color-border);
 `;
 
 // Slider Editor Styles
 const SliderPreview = styled.div`
-	margin-top: ${spacing.sm};
-	padding: ${spacing.md};
-	background: ${colors.neutral[50]};
-	border-radius: 8px;
+	margin-top: var(--spacing-sm);
+	padding: var(--spacing-md);
+	background: var(--color-surface-hover);
+	border-radius: var(--radius-md);
 	display: flex;
 	align-items: center;
-	gap: ${spacing.md};
+	gap: var(--spacing-md);
 `;
 
 const SliderPreviewLabel = styled.span`
-	font-size: 14px;
-	color: ${colors.text.secondary};
+	font-size: var(--font-size-sm);
+	color: var(--color-text-secondary);
 `;
 
 const SliderPreviewValue = styled.span`
-	font-size: 18px;
-	font-weight: 600;
-	color: ${colors.success[600]};
+	font-size: var(--font-size-lg);
+	font-weight: var(--font-weight-semibold);
+	color: var(--color-success-600);
 `;
 
 const SliderPreviewRange = styled.span`
-	font-size: 12px;
-	color: ${colors.text.disabled};
+	font-size: var(--font-size-xs);
+	color: var(--color-text-disabled);
 `;
 
 // Hotspot Editor Styles
@@ -1668,9 +1669,9 @@ const HotspotEditorContainer = styled.div`
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	border-radius: 8px;
-	border: 2px solid ${colors.neutral[200]};
-	background: ${colors.neutral[100]};
+	border-radius: var(--radius-md);
+	border: 2px solid var(--color-border);
+	background: var(--color-surface-hover);
 	overflow: hidden;
 `;
 
@@ -1691,7 +1692,7 @@ const HotspotMarker = styled.div`
 	position: absolute;
 	width: 24px;
 	height: 24px;
-	background: ${colors.error[500]};
+	background: var(--color-error-500);
 	border: 3px solid white;
 	border-radius: 50%;
 	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
@@ -1712,25 +1713,25 @@ const HotspotMarker = styled.div`
 `;
 
 const HotspotCoords = styled.div`
-	margin-top: ${spacing.sm};
-	font-size: 13px;
-	color: ${colors.text.secondary};
+	margin-top: var(--spacing-sm);
+	font-size: var(--font-size-sm);
+	color: var(--color-text-secondary);
 	text-align: center;
 `;
 
 const HotspotWarning = styled.div`
-	padding: ${spacing.lg};
-	background: ${colors.warning[50]};
-	border: 1px solid ${colors.warning[200]};
-	border-radius: 8px;
-	color: ${colors.warning[700]};
+	padding: var(--spacing-lg);
+	background: var(--color-warning-bg);
+	border: 1px solid var(--color-warning-border);
+	border-radius: var(--radius-md);
+	color: var(--color-warning-700);
 	text-align: center;
 `;
 
 const CheckboxRow = styled.div`
 	display: flex;
 	align-items: center;
-	gap: ${spacing.sm};
+	gap: var(--spacing-sm);
 
 	input[type='checkbox'] {
 		width: 18px;
@@ -1739,8 +1740,8 @@ const CheckboxRow = styled.div`
 	}
 
 	label {
-		font-size: 14px;
-		color: ${colors.text.primary};
+		font-size: var(--font-size-sm);
+		color: var(--color-text-primary);
 		cursor: pointer;
 	}
 `;
@@ -1749,27 +1750,27 @@ const CheckboxRow = styled.div`
 const SortingItemsContainer = styled.div`
 	display: flex;
 	flex-direction: column;
-	gap: ${spacing.sm};
-	margin-top: ${spacing.sm};
+	gap: var(--spacing-sm);
+	margin-top: var(--spacing-sm);
 `;
 
 const SortingItemRow = styled.div`
 	display: flex;
 	align-items: center;
-	gap: ${spacing.sm};
+	gap: var(--spacing-sm);
 `;
 
 const SortingItemNumber = styled.span`
 	width: 24px;
-	font-size: 14px;
-	font-weight: 600;
-	color: ${colors.text.secondary};
+	font-size: var(--font-size-sm);
+	font-weight: var(--font-weight-semibold);
+	color: var(--color-text-secondary);
 	text-align: right;
 `;
 
 const SortingHint = styled.p`
-	margin-top: ${spacing.md};
-	font-size: 13px;
-	color: ${colors.text.secondary};
+	margin-top: var(--spacing-md);
+	font-size: var(--font-size-sm);
+	color: var(--color-text-secondary);
 	font-style: italic;
 `;
