@@ -15,11 +15,12 @@ import { Modal } from '../atoms/Modal';
 import { Icon } from '../atoms/Icon';
 import { GameModeSelector as GameModeSelectorComponent, TeamConfigEditor } from '../molecules';
 import { Layout } from '../organisms/Layout';
-import { createQuestionEditor, getQuestionTypeAbbreviation, getAvailableQuestionTypes } from '../organisms/question-editors';
+import { createQuestionEditor, getQuestionTypeAbbreviation, getAvailableQuestionTypes } from '../organisms/question-editors/index';
 import { api, QuizMetadata } from '../../services/api';
-import { validateQuestion, getQuestionAnswerSummary, hasRequiredMedia, createQuestion, convertQuestionType } from '../../features/quiz-editor';
+import { validateQuestion, getQuestionAnswerSummary, hasRequiredMedia } from '../../features/quiz-editor/services/question-validation.service';
+import { createQuestion, convertQuestionType } from '../../features/quiz-editor/services/question-factory.service';
 import { GameMode, TeamConfig, TeamDefinition, createDefaultTeamConfig, createTeamDefinition } from '../../types/team.types';
-import type { EditorQuestion, EditorQuestionType, EditorAnswer } from '../../types/editor.types';
+import type { EditorQuestion, EditorQuestionType, EditorAnswer } from '../../features/quiz-editor/types/editor.types';
 import styles from './QuizEditorPage.module.css';
 
 interface QuestionCatalog {
